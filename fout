@@ -1,0 +1,195 @@
+args = Any["/users/yanj4/.julia/v0.4/PETSc/deps/petsc-3.6.0"
+    "arch-linux2-c-debug"]
+PetscScalar type = Float64
+PetscReal type = Float64
+PetscInt type = Int32
+ARGS = UTF8String[]
+size(ARGS) = (0,)
+pwd = /users/yanj4/.julia/v0.4/PDESolver/src/solver/elliptic
+fname = input.jl
+.null
+/users/yanj4/.julia/v0.4/PDESolver/src/solver/elliptic/meshfiles/square8x8.smb
+constructing DG mesh
+
+Constructing PumiMeshDG2 Object
+  sbp_name = /users/yanj4/.julia/v0.4/PDESolver/src/solver/elliptic/meshfiles/square8x8.smb
+  dmg_name = .null
+Entered init2
+
+initializing PCU
+loading null geometric model
+finished loading geometric model
+mesh /users/yanj4/.julia/v0.4/PDESolver/src/solver/elliptic/meshfiles/square8x8.smb loaded in 0.001302 seconds
+number of triangle 128 quad 0
+mesh entity counts: v 81 e 208 f 128 r 0
+mesh verified in 0.000596 seconds
+mesh reordered in 0.000251 seconds
+dimension 2 mesh requests shape type 0 of order 1
+returning FieldShape Linear
+looking for coordinates_ver tag
+coords_tag = 0x6a64370
+finished first mesh shape change
+about to perform final mesh shape change
+finished loading mesh, changing shape
+new shape name is Linear
+initilized library global variables
+Finished numbering mesh entities
+type of its[0] = 0index its[0] = 0
+type of its[1] = 1index its[1] = 1
+type of its[2] = 2index its[2] = 2
+
+numV = 81 , numEdge = 208 , numFace = 128
+writeVtuFile into buffers: 0.000422 seconds
+writeVtuFile buffers to disk: 0.040213 seconds
+vtk files output_init written in 0.067125 seconds
+dimension 2 mesh requests shape type 2 of order 2
+returning FieldShape DG1SBPQuadratic
+getting DG mesh coordinates
+numNodesPerType = [0,0,6]
+numEntitesPerType = [81,208,128]
+getting node maps for 2D mesh
+num_entities = [81,208,128]
+num_nodes_entity = [0,0,6]
+num_entities = [81,208,128]
+num_nodes_entity = [0,0,6]
+numbering nodes
+expected number of dofs = 768
+opts[key_i] = [0,1,2,3]
+----- Entered getParallelInfo -----
+adding color 5
+about to get distance 1 coloring
+getting sparsity bounds
+  0.000050 seconds (3 allocations: 272 bytes)
+  0.009612 seconds (225 allocations: 12.266 KB)
+finished getting sparsity counts
+numEdges = 208
+numInterfaces = 176
+size(mesh.triangulation) = (3,13)
+
+creating sub-triangulated mesh
+allocating memory
+finished allocating memory
+deriving model
+finished deriving model
+accepted changes
+mesh verified in 0.006167 seconds
+verified
+Copying Numbering 0
+Numbering name is vertNums
+Copying Numbering 1
+Numbering name is edgeNums
+Copying Numbering 2
+Numbering name is faceNums
+Copying Numbering 3
+Numbering name is coloring
+Copying Numbering 4
+Numbering name is dof status
+Copying Numbering 5
+Numbering name is reordered node numbers
+Copying Numbering 6
+Numbering name is reordered dof numbers
+printing new mesh fields and numberings
+
+
+this mesh has 0 fields
+
+this mesh has 7 numberings
+numbering 0 is named vertNums
+numbering 1 is named edgeNums
+numbering 2 is named faceNums_old
+numbering 3 is named coloring_old
+numbering 4 is named dof status
+numbering 5 is named reordered node numbers
+numbering 6 is named reordered dof numbers
+finished printing Numbering names
+creating solution field on new mesh
+  0.064974 seconds (19.48 k allocations: 994.686 KB)
+finished creating sub mesh
+
+printin main mesh statistics
+numVert = 81
+numEdge = 208
+numEl = 128
+numDof = 768
+numNodes = 768
+about to write dofs
+about to write visualization files
+writeVtuFile into buffers: 0.009383 seconds
+writeVtuFile buffers to disk: 0.013191 seconds
+vtk files mesh_complete written in 0.029273 seconds
+finished writing visualization files
+constructing DG mesh completed
+
+Constructing EllipticData object
+  Tsol = Complex{Float64}
+  Tres = Complex{Float64}
+  Tdim = 2
+  Tmsh = Float64
+entered NewtonData constructor
+typeof(eqn) = EllipticEqnMod.EllipticData_{Complex{Float64},Complex{Float64},2,Float64}
+step_tol = 1.0e-12
+res_abstol = 1.0e-6
+res_reltol = 1.0e-6
+res_reltol0 = -1.0
+Creating DG sparse matrix
+distance-2 coloring
+
+Entered Newtons Method
+typeof(jac) = SparseMatrixCSC{Float64,Int64}
+evaluating residual at initial condition
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+res_0_norm = 286.7584588198486
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+res_reltol0 = -1.0
+using initial residual for relative residual
+
+Newton iteration: 1
+step_fac = 1.0
+calculating complex step jacobian
+calculating sparse complex step jacobian
+jacobian calculation: 15.407972113 seconds, 1.159514838 GC seconds, 4494421928 bytes allocated
+rho_min = 3.0000000000000036, rho_max = 6.0000000000000036
+matrix solve: 0.380910702 seconds, 0.007205847 GC seconds, 14436098 bytes allocated
+step_norm = 0.3833661690171418
+residual norm = 1.3806173129226567e-12
+relative residual 4.814565256782912e-15
+printed to convergence.dat
+Newton iteration converged with residual norm 1.3806173129226567e-12
+Newton iteration converged with relative residual norm 4.814565256782912e-15
+l2norm = 0.022621075164085316
+functional = [7.982910342222614e-5]
+transferring field to submesh
+
+Copying Field solution_field to solution_field
+writeVtuFile into buffers: 0.009923 seconds
+writeVtuFile buffers to disk: 0.010837 seconds
+vtk files solution_done written in 0.030042 seconds

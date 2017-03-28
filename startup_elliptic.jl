@@ -13,7 +13,7 @@ using ArrayViews
 using Utils
 using MPI
 using Debug
-@debug function run_elliptic(fin::ASCIIString)
+@debug function run(fin::ASCIIString)
 
 
   include(joinpath(Pkg.dir("PDESolver"), "src/input/read_input.jl"))

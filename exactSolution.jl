@@ -28,18 +28,17 @@ function call{Tmsh, Tsol}(obj::ExactPoly2nd, xy::AbstractArray{Tmsh}, q::Abstrac
 end
 
 
-global const ExactDict = Dict{ASCIIString, ExactSolutionType}
-(
+global const ExactDict = Dict{ASCIIString, ExactSolutionType} (
  "ExactTrig" => ExactTrig(),
  "ExactPoly2nd" => ExactPoly2nd(),
  "ExactTrig" => ExactTrig()
 )
 
 
-@debug function calcErrorL2Norm{Tmsh, Tsol, Tres}( mesh::AbstractMesh{Tmsh},
-                                                  sbp::AbstractSBP,
-                                                  eqn::AbstractEllipticData{Tsol, Tres},
-                                                  opts)
+function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
+                                           sbp::AbstractSBP,
+                                           eqn::AbstractEllipticData{Tsol, Tres},
+                                           opts)
   l2norm::Float64 = 0.
   lInfnorm::Float64 = 0.
   qe = Array(Tsol, mesh.numDofPerNode)

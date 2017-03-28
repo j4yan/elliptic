@@ -1,0 +1,16 @@
+ndof = 768
+dof_offsets = [768]
+peer_parts = Int64[]
+peer_dof_offsets = Int64[]
+----- Entered colorMesh2 -----
+adding color 5
+----- Entered colorMeshBoundary2 -----
+number of colors = 5
+number of each color = Int32[32,32,32,31,1]
+max colors = 5
+entered getColors
+verifying distance-1 coloring
+color-1 verification finished
+number of element with non unique coloring = 0
+abc
+getting non-local color masks

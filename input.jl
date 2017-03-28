@@ -1,5 +1,4 @@
-arg_dict = Dict{Any, Any}
-(
+arg_dict = Dict{Any, Any} (
   # "operator_type" => "SBPGamma",
   "operator_type" => "SBPOmega",
   "use_DG" => true,
@@ -21,15 +20,15 @@ arg_dict = Dict{Any, Any}
   "BC1" => [0, 1, 2, 3],
   "Functional" => "volumeAverage",
 
-  # "exactSolution" =>"ExactTrig",
-  # "BC1_name" => "DirichletTrig",
-  # "Diffusion" => "poly0th", # lambda = [1 & 0 \\ 0 & 1]
-  # "SRC_name" => "SrcTrigPoly0thDiffn",
-
   "exactSolution" =>"ExactTrig",
   "BC1_name" => "DirichletTrig",
-  "Diffusion" => "poly2nd", # lambda = [x^2+1 & xy \\ xy & y^2+1]
-  "SRC_name" => "SrcTrigPoly2ndDiffn",
+  "Diffusion" => "poly0th", # lambda = [1 & 0 \\ 0 & 1]
+  "SRC_name" => "SrcTrigPoly0thDiffn",
+
+  # "exactSolution" =>"ExactTrig",
+  # "BC1_name" => "DirichletTrig",
+  # "Diffusion" => "poly2nd", # lambda = [x^2+1 & xy \\ xy & y^2+1]
+  # "SRC_name" => "SrcTrigPoly2ndDiffn",
 
   # "SRC_name" => "SRC0",
 
