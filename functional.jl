@@ -79,8 +79,7 @@ function FunctionalModification{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh}
   return nothing
 end
 
-global const FunctionalDict = Dict{ASCIIString, AbstractFunctional}
-( "volumeAverage" => volumeAverage(),
+global const FunctionalDict = Dict{ASCIIString, AbstractFunctional} ( "volumeAverage" => volumeAverage(),
   "energy" => volumeEnergy()
 )
 

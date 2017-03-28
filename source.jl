@@ -90,8 +90,7 @@ function call(obj::SrcPoly2nd,
   return nothing
 end
 
-global const SRCDict = Dict{ASCIIString, SRCType}
-(
+global const SRCDict = Dict{ASCIIString, SRCType} (
  "SRC0" => SRC0(),
  "SRC1" => SRC1(),
  "SrcTrigPoly0thDiffn" => SrcTrigPoly0thDiffn(),
