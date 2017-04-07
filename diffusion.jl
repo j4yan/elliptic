@@ -44,8 +44,8 @@ function call{Tmsh, Tsol}(obj::DiffnPoly0th,
 	# @assert(size(lambda, 2) == Tdim)
 	# the 3rd dimension should be dof per node	
 	for dof = 1:size(lambda, 3)
-		lambda[1, 1, dof] = 1.0
-		lambda[2, 2, dof] = 1.0 
+		lambda[1, 1, dof] = 1.0e1
+		lambda[2, 2, dof] = 1.0e1 
 		lambda[1, 2, dof] = 0.0 
 		lambda[2, 1, dof] = 0.0
 	end

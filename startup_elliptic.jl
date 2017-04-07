@@ -13,9 +13,8 @@ using ArrayViews
 using Utils
 using MPI
 using Debug
-@debug function run(fin::ASCIIString)
 
-
+function run(fin::ASCIIString)
   include(joinpath(Pkg.dir("PDESolver"), "src/input/read_input.jl"))
 
   if !MPI.Initialized()
@@ -107,40 +106,27 @@ using Debug
   res_vec = eqn.res_vec
   q_vec = eqn.q_vec
 
-  #
-  # do some test
-  #
-  # interpolateFace(mesh, sbp, eqn, opts, mesh.coords, eqn.xy_face)
-  # evalElliptic(mesh, sbp, eqn, opts)
-  # testOperatorGradientInterpolation(mesh, sbp, eqn, opts)
-
-  # if flag == 1
-  # rk4(evalElliptic, opts["delta_t"], opts["t_max"], mesh, sbp, eqn, opts,
-  # res_tol=opts["res_abstol"], real_time=opts["real_time"])
-  # elseif flag == 4 || flag == 5
-  # newton(evalElliptic, mesh, sbp, eqn, opts, pmesh, itermax=opts["itermax"],
-  # step_tol=opts["step_tol"], res_abstol=opts["res_abstol"],
-  # res_reltol=opts["res_reltol"], res_reltol0=opts["res_reltol0"])
-  # else
-  # error("We should never get here!\n")
-  # end
   iterate(mesh, pmesh, sbp, eqn, opts)	
 
   if haskey(opts, "exactSolution")
     l2norm, lInfnorm = calcErrorL2Norm(mesh, sbp, eqn, opts)
+    println("L2Norm = ", l2norm)
+    println("LinfNorm = ", lInfnorm)
     fname = "l2norm.dat"
-    println("l2norm = ", l2norm)
     f = open(fname, "w")
-    println(f, l2norm, " ", lInfnorm)
+    println(f, l2norm)
   end
 
   if haskey(opts, "Functional")
+    if haskey(opts, "exactFunctional")
+      exactFunctional = opts["exactFunctional"]
+    end
     functional_value = Array(Tsol, mesh.numDofPerNode)
     eqn.functional(mesh, sbp, eqn, opts, functional_value)
+    println("functional = ", abs(real(functional_value[1]) - exactFunctional))
     fname = "functional.dat"
-    println("functional = ", abs(real(functional_value)))
     f = open(fname, "w")
-    println(f, abs(real(functional_value)))
+    println(f, abs(real(functional_value[1]) - exactFunctional))
   end
 
   eqn.assembleSolution(mesh, sbp, eqn, opts, eqn.q, eqn.q_vec)

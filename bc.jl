@@ -176,6 +176,11 @@ end
   BsqrtRHinvRtBsqrt = Bsqrt*R.'*perm.'*Hinv*perm*R*Bsqrt
   sigma = eigmax(BsqrtRHinvRtBsqrt)
 
+  relax_coef = 1.0
+  if haskey(opts, "unstable_coef")
+    relax_coef = opts["unstable_coef"]
+  end
+
   for iBC = 1:mesh.numBC
     indx0 = mesh.bndry_offsets[iBC]
     indx1 = mesh.bndry_offsets[iBC+1] - 1
@@ -371,14 +376,14 @@ end
         if penalty_method == "Shahbazi" || penalty_method == "SAT0" 
           for n = 1:mesh.numNodesPerFace
             for dof = 1 : mesh.numDofPerNode
-              flux[dof, n] += penalty[dof, n]*dq[dof, n]
+              flux[dof, n] += penalty[dof, n]*dq[dof, n] * relax_coef
             end
           end
         elseif penalty_method == "SAT" 
           for n = 1:mesh.numNodesPerFace
             for n1 = 1:mesh.numNodesPerFace
               for dof = 1:mesh.numDofPerNode
-                flux[dof, n] += area[n]*Sat[dof, n, n1]*dq[dof, n1]
+                flux[dof, n] += area[n]*Sat[dof, n, n1]*dq[dof, n1] * relax_coef
               end
             end
           end

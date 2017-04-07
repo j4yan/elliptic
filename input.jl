@@ -7,10 +7,10 @@ arg_dict = Dict{Any, Any} (
   "res_tol" => 1e-12,
   "step_tol" => 1e-12,
   "itermax" => 1,
-  "order" => 2,
-  # "smb_name" => "src/solver/elliptic/meshfiles/square32x32.smb",
+  "order" => 3,
+  "smb_name" => "src/solver/elliptic/meshfiles/square32x32.smb",
   # "smb_name" => "src/solver/elliptic/meshfiles/square16x16.smb",
-  "smb_name" => "src/solver/elliptic/meshfiles/square8x8.smb",
+  # "smb_name" => "src/solver/elliptic/meshfiles/square8x8.smb",
   # "smb_name" => "src/solver/elliptic/meshfiles/square4x4.smb",
   # "smb_name" => "src/solver/elliptic/perturbed_square16x16.smb",
   # "smb_name" => "src/solver/elliptic/meshfiles/perturbed_square8x8.smb",
@@ -20,10 +20,11 @@ arg_dict = Dict{Any, Any} (
   "BC1" => [0, 1, 2, 3],
   "Functional" => "volumeAverage",
 
-  "exactSolution" =>"ExactTrig",
+  "exactSolution" =>"ExactExpTrig",
   "BC1_name" => "DirichletTrig",
-  "Diffusion" => "poly0th", # lambda = [1 & 0 \\ 0 & 1]
-  "SRC_name" => "SrcTrigPoly0thDiffn",
+  "Diffusion" => "poly0th", # lambda = [10 & 0 \\ 0 & 10]
+  "SRC_name" => "SrcExpTrigPoly0thDiffn",
+  "exactFunctional" => 1.846230857168755189823348538541e-02;
 
   # "exactSolution" =>"ExactTrig",
   # "BC1_name" => "DirichletTrig",
@@ -60,6 +61,6 @@ arg_dict = Dict{Any, Any} (
   # "TimeAdvance" => "CN",
   # "TimeAdvance" => "SDIRK4",
   "real_time" => false
- )
+)
 
 

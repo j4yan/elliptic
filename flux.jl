@@ -71,7 +71,7 @@ end
 #
 # Calculate flux at edge cubature points using face-based form.
 #
-@debug function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
+function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
                                                      sbp::AbstractSBP,
                                                      eqn::EllipticData{Tsol, Tres, Tdim},
                                                      opts,
@@ -133,9 +133,10 @@ end
 
   BsqrtRHinvRtBsqrt = Bsqrt*R.'*perm.'*Hinv*perm*R*Bsqrt 
   sigma = eigmax(BsqrtRHinvRtBsqrt)
-
-  println("rho_min = ", eigmin(BsqrtRHinvRtBsqrt), ", rho_max = ", sigma)
-
+  relax_coef = 1.0
+  if haskey(opts, "unstable_coef")
+    relax_coef = opts["unstable_coef"]
+  end
   for f = 1:nfaces    # loop over faces
     face = interfaces[f]
     eL = face.elementL
@@ -380,14 +381,14 @@ end
     if penalty_method == "Shahbazi" || penalty_method == "SAT0"|| penalty_method == "Hartman"  
       for n=1:mesh.numNodesPerFace
         for dof = 1:mesh.numDofPerNode
-          flux_face[dof, n, f] += penalty[dof, n]*dq[dof, n]
+          flux_face[dof, n, f] += penalty[dof, n]*dq[dof, n] * relax_coef
         end
       end
     elseif penalty_method == "SAT" 
       for n=1:mesh.numNodesPerFace
         for n1 = 1:mesh.numNodesPerFace
           for dof = 1:mesh.numDofPerNode
-            flux_face[dof, n, f] += Sat[dof, n, n1]*dq[dof, n1]*area[n]
+            flux_face[dof, n, f] += Sat[dof, n, n1]*dq[dof, n1]*area[n] * relax_coef
           end
         end
       end
@@ -400,16 +401,3 @@ end
 end # end of function calcFaceFlux
 
 
-# type SIPG <: FluxType
-# end
-# function call(obj::SIPG)
-# # temporarily do nothing since SIPG is hard coded
-# end
-
-# global const FluxDict = Dict{ASCIIString, FluxType}(
-# "SIPG" => SIPG()
-# )
-
-# function getFluxFunctors(mesh::AbstractDGMesh, sbp, eqn, opts)
-# eqn.flux_func = FluxDict[opts["Flux_name"]]
-# end

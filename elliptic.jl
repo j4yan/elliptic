@@ -14,7 +14,9 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   # getFluxFunctors(mesh, sbp, eqn, opts)
   getSrcFuntors(mesh, sbp, eqn, opts)
   getDiffnFunc(mesh, sbp, eqn, opts)
-  getFunctional(mesh, sbp, eqn, opts)
+  if haskey(opts, "Functional")
+    getFunctional(mesh, sbp, eqn, opts)
+  end
 
   calcDiffn(mesh, sbp, eqn, eqn.diffusion_func, eqn.lambda)
   dim = size(mesh.coords, 1)
@@ -66,7 +68,7 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   end
 end
 
-@debug function evalElliptic(mesh::AbstractMesh,
+function evalElliptic(mesh::AbstractMesh,
                              sbp::AbstractSBP,
                              eqn::EllipticData,
                              opts,
@@ -98,7 +100,7 @@ end
 end
 
 
-@debug function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
+function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                            sbp::AbstractSBP,
                                            eqn::AbstractEllipticData{Tsol, Tres},
                                            opts)
@@ -194,7 +196,7 @@ end
 #     \int ∇v⋅(Λ∇f) dΩ
 # where Λ is matrix coefficient
 #
-@debug function weakdifferentiate2!{Tmsh, Tsbp,Tflx,Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
+function weakdifferentiate2!{Tmsh, Tsbp,Tflx,Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                                                       sbp::AbstractSBP{Tsbp},
                                                                       eqn::EllipticData{Tsol, Tres, Tdim},
                                                                       q_grad::AbstractArray{Tflx,4},
@@ -247,7 +249,7 @@ end
 # TODO: put the integral of ∫∇v ⋅ (fx, fy) dΓ into a function,
 #       let's say interiorfaceintegrate2
 #
-@debug function evalFaceIntegrals{Tmsh, Tsol, Tres, Tdim}(
+function evalFaceIntegrals{Tmsh, Tsol, Tres, Tdim}(
                                                           mesh::AbstractDGMesh{Tmsh},
                                                           sbp::AbstractSBP,
                                                           eqn::EllipticData{Tsol, Tres, Tdim},

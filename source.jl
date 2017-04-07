@@ -17,6 +17,43 @@ function call(obj::SRC1,
   return nothing
 end
 
+#
+# a scalar diffusion coefficient, 10
+#
+type SrcExpTrigPoly0thDiffn <: SRCType
+end
+function call(obj::SrcExpTrigPoly0thDiffn, 
+              xy::AbstractVector, 
+              src::AbstractArray)
+  k = 2.0
+  ss = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  cs = cos(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  sc = sin(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  ex = exp(xy[1] + xy[2])
+  src[:] = (2. - 8*k*k*pi*pi) * ss + 4*k*pi*(cs + sc)
+  src[:] *= -10.*ex
+  return nothing
+end
+#
+# a scalar diffusion coefficient, 10
+#
+type SrcTrigPoly0thDiffn <: SRCType
+end
+function call(obj::SrcTrigPoly0thDiffn, 
+              xy::AbstractVector, 
+              src::AbstractArray)
+  n = 2.0
+  factor = 8.0*n*n*pi*pi
+  ss = sin(2*n*pi*xy[1])*sin(2*n*pi*xy[2])
+  src[:] = 0.0
+  for i = 1:length(src)
+    src[i] = factor*ss * 1.0e1
+  end
+  return nothing
+end
+#
+# a 2nd order diffusion coefficient tensor
+#
 type SrcTrigPoly2ndDiffn <: SRCType
 end
 function call(obj::SrcTrigPoly2ndDiffn, 
@@ -39,6 +76,10 @@ function call(obj::SrcTrigPoly2ndDiffn,
 end
 
 
+
+#
+# a 6th order diffusion coefficient tensor
+#
 type SrcTrigPoly6thDiffn <: SRCType
 end
 function call(obj::SrcTrigPoly6thDiffn, 
@@ -59,44 +100,14 @@ function call(obj::SrcTrigPoly6thDiffn,
   end
   return nothing
 end
-type SrcTrigPoly0thDiffn <: SRCType
-end
-function call(obj::SrcTrigPoly0thDiffn, 
-              xy::AbstractVector, 
-              src::AbstractArray)
-  n = 2.0
-  factor = 8.0*n*n*pi*pi
-  ss = sin(2*n*pi*xy[1])*sin(2*n*pi*xy[2])
-  src[:] = 0.0
-  for i = 1:length(src)
-    src[i] = factor*ss
-  end
-  return nothing
-end
 
-type  SrcPoly2nd <: SRCType
-end
-function call(obj::SrcPoly2nd, 
-              xy::AbstractVector, 
-              src::AbstractArray)
-  a = 1.0
-  b = 1.0
-  c = 1.0
-
-  for i = 1:length(src)
-    src[i] = 8.0*a*xy[1]*xy[1] + 8.0*b*xy[1]*xy[2] + 8.0*c*xy[2]*xy[2] + 2*a + 2*c
-    src[i] = -src[i]
-  end
-  return nothing
-end
-
-global const SRCDict = Dict{ASCIIString, SRCType} (
+global const SRCDict = Dict{ASCIIString, SRCType}(
  "SRC0" => SRC0(),
  "SRC1" => SRC1(),
  "SrcTrigPoly0thDiffn" => SrcTrigPoly0thDiffn(),
+ "SrcExpTrigPoly0thDiffn" => SrcExpTrigPoly0thDiffn(),
  "SrcTrigPoly2ndDiffn" => SrcTrigPoly2ndDiffn(),
  "SrcTrigPoly6thDiffn" => SrcTrigPoly6thDiffn(),
- "SrcPoly2nd" => SrcPoly2nd()
 )
 
 
