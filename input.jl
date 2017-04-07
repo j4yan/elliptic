@@ -1,4 +1,4 @@
-arg_dict = Dict{Any, Any} (
+arg_dict = Dict{Any, Any}(
   # "operator_type" => "SBPGamma",
   "operator_type" => "SBPOmega",
   "use_DG" => true,
@@ -24,7 +24,7 @@ arg_dict = Dict{Any, Any} (
   "BC1_name" => "DirichletTrig",
   "Diffusion" => "poly0th", # lambda = [10 & 0 \\ 0 & 10]
   "SRC_name" => "SrcExpTrigPoly0thDiffn",
-  "exactFunctional" => 1.846230857168755189823348538541e-02;
+  "exactFunctional" => 1.846230857168755189823348538541e-02,
 
   # "exactSolution" =>"ExactTrig",
   # "BC1_name" => "DirichletTrig",
