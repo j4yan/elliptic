@@ -14,77 +14,19 @@ using Utils
 using MPI
 using Debug
 
-function run(fin::ASCIIString)
+function run(fin::AbstractString)
   include(joinpath(Pkg.dir("PDESolver"), "src/input/read_input.jl"))
 
   if !MPI.Initialized()
     MPI.Init()
   end
-  # @bp
+
   println("ARGS = ", ARGS)
   println("size(ARGS) = ", size(ARGS))
   opts = read_input(fin)
+  dofpernode = 1
+  sbp, mesh, pmesh, Tsol, Tres, Tmsh, mesh_time = createMeshAndOperator(opts, dofpernode)
 
-  # flag determines whether to calculate u, dR/du, or dR/dx (1, 2, or 3)
-  flag = opts["run_type"]
-
-  # timestepping parameters
-  delta_t = opts["delta_t"]
-
-  if flag == 1
-    Tmsh = Float64
-    Tsbp = Float64
-    Tsol = Float64
-    Tres = Float64
-  elseif flag == 4  # use Newton method using finite difference
-    Tmsh = Float64
-    Tsbp = Float64
-    Tsol = Float64
-    Tres = Float64
-  elseif flag == 5  # use complex step dR/du
-    Tmsh = Float64
-    Tsbp = Float64
-    Tsol = Complex128
-    Tres = Complex128
-  else
-    error("We should never get here!\n")
-  end
-
-  order = opts["order"]
-  if opts["operator_type"] == "SBPOmega"
-    reorder = false
-    internal = true
-    shape_type = 2
-  elseif opts["operator_type"] == "SBPGamma"
-    reorder = false
-    internal = false
-    shape_type = 3
-  else
-    opType = opts["operator_type"]
-    throw(ArgumentError("unrecognized operator type $opType"))
-    error("unrecognized operator type $opType")
-  end
-  sbp = TriSBP{Tsbp}(degree=order, reorder=reorder, internal=internal)  # create linear sbp operator
-  ref_verts = [-1.0 1.0 -1.0; -1.0 -1.0 1.0]
-  interp_op = SummationByParts.buildinterpolation(sbp, ref_verts)
-  sbpface = TriFace{Float64}(order, sbp.cub, ref_verts.')
-
-  # create linear mesh with 1 dof per node
-  dmg_name = opts["dmg_name"]
-  smb_name = opts["smb_name"]
-  println(dmg_name)
-  println(smb_name)
-  println("constructing DG mesh")
-  # @bp
-  mesh = PumiMeshDG2{Tmsh}(dmg_name, smb_name, order, sbp, opts, interp_op, sbpface;
-                           dofpernode=1, coloring_distance=opts["coloring_distance"], shape_type=shape_type)
-  println("constructing DG mesh completed")
-  if (opts["jac_type"] == 3 || opts["jac_type"] == 4) && opts["use_jac_precond"]
-    pmesh = PumiMeshDG2Preconditioning(mesh, sbp, opts;
-                                       coloring_distance=opts["coloring_distance_prec"])
-  else
-    pmesh = mesh
-  end
   for elem = 1:mesh.numEl
     for n = 1:mesh.numNodesPerElement
       if mesh.jac[n, elem] <= 0.0

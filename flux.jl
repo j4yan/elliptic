@@ -154,7 +154,7 @@ function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
     for n=1:mesh.numNodesPerFace
       dxidx = sview(mesh.dxidx_face, :, :, n, f)
       # norm vector in reference element
-      nrm_xi = sview(sbp.facenormal, :, fL)
+      nrm_xi = sview(mesh.sbpface.normal, :, fL)
       nrm[n,1] = dxidx[1, 1]*nrm_xi[1] + dxidx[2, 1]*nrm_xi[2]
       nrm[n,2] = dxidx[1, 2]*nrm_xi[1] + dxidx[2, 2]*nrm_xi[2]
 

@@ -200,7 +200,7 @@ end
       #
       for n=1:mesh.numNodesPerFace
         dxidx = sview(mesh.dxidx_bndry, :, :, n, f)
-        nrm_xi = sview(sbp.facenormal, :, bndry.face)
+        nrm_xi = sview(mesh.sbpface.normal, :, bndry.face)
         nrm[n,1] = dxidx[1, 1]*nrm_xi[1] + dxidx[2, 1]*nrm_xi[2]
         nrm[n,2] = dxidx[1, 2]*nrm_xi[1] + dxidx[2, 2]*nrm_xi[2]
         area[n] = sqrt(nrm[n,1]*nrm[n,1] + nrm[n,2]*nrm[n,2])
@@ -254,7 +254,7 @@ end
         #
         for n=1:mesh.numNodesPerFace
           dxidx = sview(mesh.dxidx_bndry, :, :, n, f)
-          nrm_xi = sview(sbp.facenormal, :, bndry.face)
+          nrm_xi = sview(mesh.sbpface.normal, :, bndry.face)
           nrm[n,1] = dxidx[1, 1]*nrm_xi[1] + dxidx[2, 1]*nrm_xi[2]
           nrm[n,2] = dxidx[1, 2]*nrm_xi[1] + dxidx[2, 2]*nrm_xi[2]
           area[n] = sqrt(nrm[n,1]*nrm[n,1] + nrm[n,2]*nrm[n,2])
@@ -411,7 +411,8 @@ end
         #
         for n=1:mesh.numNodesPerFace
           dxidx = sview(mesh.dxidx_bndry, :, :, n, f)
-          nrm = sview(sbp.facenormal, :, bndry.face)
+          # nrm = sview(sbp.facenormal, :, bndry.face)
+          nrm_xi = sview(mesh.sbpface.normal, :, bndry.face)
           nrm[n,1] = dxidx[1, 1]*nrm[1] + dxidx[2, 1]*nrm[2]
           nrm[n,2] = dxidx[1, 2]*nrm[1] + dxidx[2, 2]*nrm[2]
           area[n] = sqrt(nrm[n,1]*nrm[n,1] + nrm[n,2]*nrm[n,2])
