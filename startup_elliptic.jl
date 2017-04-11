@@ -4,6 +4,7 @@ push!(LOAD_PATH, joinpath(Pkg.dir("PDESolver"),     "src/NonlinearSolvers"))
 push!(LOAD_PATH, joinpath(Pkg.dir("PDESolver"),     "src/Debugging"))
 push!(LOAD_PATH, joinpath(Pkg.dir("PDESolver"),     "src/Utils"))
 
+using PDESolver
 using ODLCommonTools
 using PdePumiInterface
 using SummationByParts
