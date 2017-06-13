@@ -1,5 +1,6 @@
 export evalElliptic, init, testOperatorGradientInterpolation, dataPrep, interpolateFace
 
+export evalRes
 using Debug
 function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                 sbp::AbstractSBP,
@@ -66,6 +67,14 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
       end
     end
   end
+end
+
+function evalRes(mesh::AbstractMesh,
+                             sbp::AbstractSBP,
+                             eqn::EllipticData,
+                             opts,
+                             t=0.0)
+  evalElliptic(mesh, sbp, eqn, opts)
 end
 
 function evalElliptic(mesh::AbstractMesh,

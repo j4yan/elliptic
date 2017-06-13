@@ -16,7 +16,7 @@ end
 function call{Tmsh, Tsol}(obj::ExactExpTrig, xy::AbstractArray{Tmsh}, q::AbstractArray{Tsol, 1})  # (numDofPerNode))
   k = 2.0
   ex = exp(xy[1] + xy[2])
-  q[:] = ex * sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  q[:] = ex * sin(2*k*pi*xy[1]) * sin(2*k*pi*xy[2])
   return nothing
 end
 
@@ -49,15 +49,15 @@ function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
 
   lInfnorm = -1.0
   elem_with_max_dq = 0
-  for e = 1 : mesh.numEl
+  for el = 1 : mesh.numEl
     for n = 1 : mesh.numNodesPerElement
-      xy = sview(mesh.coords, :, n, e)
+      xy = sview(mesh.coords, :, n, el)
       exactFunc(xy, qe)
-      q = sview(eqn.q, :, n, e)
-      jac = mesh.jac[n, e]
+      q = sview(eqn.q, :, n, el)
+      jac = mesh.jac[n, el]
       for v = 1:mesh.numDofPerNode
-        # dq = Real(q[v] - qe[v])
-        dq = Float64(q[v] - qe[v])
+        dq = Real(q[v] - qe[v])
+        # dq = Float64(q[v] - qe[v])
         l2norm += dq*dq*sbp.w[n]/jac
         if lInfnorm < abs(dq)
           lInfnorm = abs(dq)

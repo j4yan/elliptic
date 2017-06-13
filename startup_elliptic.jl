@@ -50,6 +50,8 @@ function run(fin::AbstractString)
   q_vec = eqn.q_vec
 
   iterate(mesh, pmesh, sbp, eqn, opts)	
+  # solve_euler(mesh, sbp, eqn, opts, pmesh)
+  # call_nlsolver(mesh, sbp, eqn, opts, pmesh)
 
   if haskey(opts, "exactSolution")
     l2norm, lInfnorm = calcErrorL2Norm(mesh, sbp, eqn, opts)

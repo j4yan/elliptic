@@ -34,6 +34,38 @@ function call(obj::SrcExpTrigPoly0thDiffn,
   src[:] *= -10.*ex
   return nothing
 end
+
+type SrcExpTrigPoly2ndDiffn <: SRCType
+end
+function call(obj::SrcExpTrigPoly2ndDiffn, 
+              xy::AbstractVector, 
+              src::AbstractArray)
+  k = 2.0
+  ss = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  cs = cos(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  sc = sin(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  cc = cos(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  ex = exp(xy[1] + xy[2])
+  lambdaxx = xy[1]*xy[1] + 1
+  lambdaxy = xy[1]*xy[2]
+  lambdayy = xy[2]*xy[2] + 1
+  q_x = ex * (ss + 2*k*pi * cs)
+  q_y = ex * (ss + 2*k*pi * sc)
+  q_xx = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * cs)
+  q_xy = ex * (ss + 2*k*pi*cs + 2*k*pi*sc + 4*k*k*pi*pi*cc)
+  q_yy = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * sc)
+  lambdaxx_x = 2*xy[1]
+  lambdaxy_x = xy[2]
+  lambdaxy_y = xy[1]
+  lambdayy_y = 2*xy[2]
+  src[:] = lambdaxx_x * q_x + lambdaxx * q_xx + 
+           lambdaxy_x * q_y + lambdaxy * q_xy + 
+           lambdaxy_y * q_x + lambdaxy * q_xy + 
+           lambdayy_y * q_y + lambdayy * q_yy
+  src[:] = -src[:]
+  return nothing
+end
+#
 #
 # a scalar diffusion coefficient, 10
 #
@@ -106,6 +138,7 @@ global const SRCDict = Dict{ASCIIString, SRCType}(
  "SRC1" => SRC1(),
  "SrcTrigPoly0thDiffn" => SrcTrigPoly0thDiffn(),
  "SrcExpTrigPoly0thDiffn" => SrcExpTrigPoly0thDiffn(),
+ "SrcExpTrigPoly2ndDiffn" => SrcExpTrigPoly2ndDiffn(),
  "SrcTrigPoly2ndDiffn" => SrcTrigPoly2ndDiffn(),
  "SrcTrigPoly6thDiffn" => SrcTrigPoly6thDiffn(),
 )

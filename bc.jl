@@ -32,6 +32,19 @@ function call{Tmsh, Tsol}(obj::DirichletTrig,
   end
   return nothing
 end
+type DirichletExpTrig <: AbstractDirichletBC
+end
+function call{Tmsh, Tsol}(obj::DirichletExpTrig, 
+                          xy::AbstractArray{Tmsh}, 
+                          q::AbstractArray{Tsol, 1})  # (numDofPerNode))
+  k = 2.0
+  q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(xy[1] + xy[2])
+  if abs(q[1]) > 1.0E-10
+    error("some problem!")
+  end
+  return nothing
+end
+
 
 type DirichletPolynial2nd <: AbstractDirichletBC
 end
@@ -66,14 +79,40 @@ function call{Tmsh, Tsol}(obj::NeumannAllOne,
   return nothing
 end
 
+type NeumannExpTrig <: AbstractNeumannBC
+end
+function call{Tmsh, Tsol}(obj::NeumannExpTrig,
+                          xy::AbstractArray{Tmsh, 1},
+                          nrm::AbstractArray{Tmsh, 1},
+                          gN::AbstractArray{Tsol, 1})  # (numDofPerNode)
+  k = 2.0
+  ss = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  cs = cos(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  sc = sin(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  cc = cos(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  ex = exp(xy[1] + xy[2])
+  lambdaxx = xy[1]*xy[1] + 1
+  lambdaxy = xy[1]*xy[2]
+  lambdayy = xy[2]*xy[2] + 1
+  q_x = ex * (ss + 2*k*pi * cs)
+  q_y = ex * (ss + 2*k*pi * sc)
+  q_xx = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * cs)
+  q_xy = ex * (ss + 2*k*pi*cs + 2*k*pi*sc + 4*k*k*pi*pi*cc)
+  q_yy = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * sc)
+  gN[:] = nrm[1] * (lambdaxx*q_x + lambdaxy*q_y) + 
+          nrm[1] * (lambdaxy*q_x + lambdayy*q_y)
+  return nothing
+end
 global const BCDict = Dict{ASCIIString, BCType}(
-                                                "DirichletAllZero" => DirichletAllZero(),
-                                                "DirichletAllOne" => DirichletAllOne(),
-                                                "NeumannAllZero" => NeumannAllZero(),
-                                                "NeumannAllOne" => NeumannAllOne(),
-                                                "DirichletPolynial2nd" => DirichletPolynial2nd(),
-                                                "DirichletTrig" => DirichletTrig()
-                                               )
+  "DirichletAllZero"     => DirichletAllZero(),
+  "DirichletAllOne"      => DirichletAllOne(),
+  "DirichletPolynial2nd" => DirichletPolynial2nd(),
+  "DirichletTrig"        => DirichletTrig(),
+  "DirichletExpTrig"     => DirichletExpTrig(),
+  "NeumannAllZero"       => NeumannAllZero(),
+  "NeumannAllOne"        => NeumannAllOne(),
+  "NeumannExpTrig"        => NeumannExpTrig(),
+ )
 
 function isDirichlet(dBC::AbstractDirichletBC)
   return true
@@ -96,6 +135,7 @@ function getBCFunctors(mesh::AbstractMesh, sbp::AbstractSBP, eqn::EllipticData, 
     mesh.bndry_funcs[i] = BCDict[val]
   end
 end
+
 function interpolateBoundary{Tsol, Tres}(mesh::AbstractDGMesh,
                                          sbp::AbstractSBP,
                                          eqn::AbstractEllipticData{Tsol, Tres},
@@ -411,13 +451,12 @@ end
         #
         for n=1:mesh.numNodesPerFace
           dxidx = sview(mesh.dxidx_bndry, :, :, n, f)
-          # nrm = sview(sbp.facenormal, :, bndry.face)
           nrm_xi = sview(mesh.sbpface.normal, :, bndry.face)
-          nrm[n,1] = dxidx[1, 1]*nrm[1] + dxidx[2, 1]*nrm[2]
-          nrm[n,2] = dxidx[1, 2]*nrm[1] + dxidx[2, 2]*nrm[2]
+          nrm[n,1] = dxidx[1, 1]*nrm_xi[1] + dxidx[2, 1]*nrm_xi[2]
+          nrm[n,2] = dxidx[1, 2]*nrm_xi[1] + dxidx[2, 2]*nrm_xi[2]
           area[n] = sqrt(nrm[n,1]*nrm[n,1] + nrm[n,2]*nrm[n,2])
-          nrm0[n,1] = nrm[n,1]/area[n]
-          nrm0[n,2] = nrm[n,2]/area[n]
+          # nrm0[n,1] = nrm[n,1]/area[n]
+          # nrm0[n,2] = nrm[n,2]/area[n]
         end
 
         for j = 1:mesh.numNodesPerFace
@@ -427,10 +466,13 @@ end
           # nx = dxidx[1, 1]*nrm[1] + dxidx[2, 1]*nrm[2]
           # ny = dxidx[1, 2]*nrm[1] + dxidx[2, 2]*nrm[2]
           # area = sqrt(nx*nx + ny*ny)
-          bc_func(xy, gN)
+          nrm_j = Array(Tmsh, 2)
+          nrm_j[1] = nrm[j, 1]
+          nrm_j[2] = nrm[j, 2]
+          bc_func(xy, nrm_j, gN)
           #
           # term-8
-          flux[:, j] -= gN*area[n]
+          flux[:, j] -= gN
         end
       end
     else

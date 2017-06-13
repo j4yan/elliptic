@@ -107,6 +107,7 @@ function evalRes{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
     SDIRK4(mesh, sbp, eqn, opts)
   end
 end
+
 function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh}, 
                                                pmesh::AbstractMesh{Tmsh},
                                                sbp::AbstractSBP{Tsbp}, 
