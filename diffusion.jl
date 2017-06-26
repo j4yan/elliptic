@@ -66,10 +66,10 @@ function getDiffnFunc(mesh::AbstractMesh,
 end
 
 function calcDiffn{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
-										   sbo::AbstractSBP,
-										   eqn::EllipticData{Tsol, Tres, Tdim},
-										   diffusion_func::AbstractDiffn,
-										   lambda::AbstractArray{Tres, 5} )
+                                           sbo::AbstractSBP,
+                                           eqn::EllipticData{Tsol, Tres, Tdim},
+                                           diffusion_func::AbstractDiffn,
+                                           lambda::AbstractArray{Tres, 5} )
 
 	numElems = mesh.numEl
 	numNodesPerElement = mesh.numNodesPerElement

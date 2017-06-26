@@ -65,6 +65,8 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
   krylov_itr::Int  # Krylov iteration number for iterative solve
   krylov_type::Int # 1 = explicit jacobian, 2 = jac-vec prod
   time::Timings
+  
+  const_delta::Tmsh
 
   function ParamType(mesh, sbp, opts, order::Integer)
     # create values, apply defaults
@@ -130,17 +132,44 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
     krylov_type = 1 # 1 = explicit jacobian, 2 = jac-vec prod
 
     time = Timings()
+
+    const_delta = cmpt_const_delta(sbp, mesh.sbpface)
+
     return new(f, t, order, q_vals, qg, v_vals, res_vals1, res_vals2, sat_vals, flux_vals1,
                flux_vals2, A0, A0inv, A1, A2, A_mats, Rmat1, Rmat2, nrm,
                edgestab_gamma, writeflux, writeboundary,
                writeq, use_edgestab, use_filter, use_res_filter, filter_mat,
                use_dissipation, dissipation_const, tau_type,
                krylov_itr, krylov_type,
-               time)
+               time,
+               const_delta)
 
   end   # end of ParamType function
 
 end  # end type declaration
+
+function cmpt_const_delta{Tsbp}(sbp::AbstractSBP{Tsbp}, sbpface)
+  R = sview(sbpface.interp, :,:)
+  BsqrtRHinvRtBsqrt = Array(Tsbp, sbpface.numnodes, sbpface.numnodes)
+  HRBRH = Array(Tsbp, sbp.numnodes, sbp.numnodes)
+  perm = zeros(Tsbp, sbp.numnodes, sbpface.stencilsize)
+  Hinv = zeros(Tsbp, sbp.numnodes, sbp.numnodes)
+  Bsqrt = zeros(Tsbp, sbpface.numnodes, sbpface.numnodes)
+  for s = 1:sbpface.stencilsize
+    perm[sbpface.perm[s, 1], s] = 1.0
+  end
+  for i = 1:sbp.numnodes
+    Hinv[i,i] = 1.0/sbp.w[i]
+  end
+  for i = 1:sbpface.numnodes
+    Bsqrt[i,i] = sqrt(sbpface.wface[i])
+  end
+
+  BsqrtRHinvRtBsqrt = Bsqrt*R.'*perm.'*Hinv*perm*R*Bsqrt 
+  delta= eigmax(BsqrtRHinvRtBsqrt)
+
+  return delta
+end
 
 abstract AbstractEllipticData{Tsol, Tres} <: AbstractSolutionData{Tsol, Tres}
 abstract EllipticData{Tsol, Tres, Tdim} <: AbstractEllipticData{Tsol, Tres}
@@ -488,3 +517,5 @@ function multiplyA0inv{Tmsh, Tsol, Tdim, Tres}(mesh::AbstractMesh{Tmsh},
 end
 
 end # end module
+
+

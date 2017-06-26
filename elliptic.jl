@@ -70,10 +70,10 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
 end
 
 function evalRes(mesh::AbstractMesh,
-                             sbp::AbstractSBP,
-                             eqn::EllipticData,
-                             opts,
-                             t=0.0)
+                 sbp::AbstractSBP,
+                 eqn::EllipticData,
+                 opts,
+                 t=0.0)
   evalElliptic(mesh, sbp, eqn, opts)
 end
 
@@ -210,27 +210,27 @@ function weakdifferentiate2!{Tmsh, Tsbp,Tflx,Tsol, Tres, Tdim}(mesh::AbstractMes
                                                                       eqn::EllipticData{Tsol, Tres, Tdim},
                                                                       q_grad::AbstractArray{Tflx,4},
                                                                       res::AbstractArray{Tres,3})
-  @assert (sbp.numnodes == size(q_grad, 2))
-  @assert (sbp.numnodes == size(res,2))
-  @assert (size(q_grad, 1) == size(res,1))    # numDofPerNode
-  @assert (size(mesh.dxidx, 1) == size(q_grad, 4))
+  # @assert (sbp.numnodes == size(q_grad, 2))
+  # @assert (sbp.numnodes == size(res,2))
+  # @assert (size(q_grad, 1) == size(res,1))    # numDofPerNode
+  # @assert (size(mesh.dxidx, 1) == size(q_grad, 4))
   dim           = size(q_grad, 4)
   nElems        = size(q_grad, 3)
   nNodesPerElem = size(q_grad, 2)
   nDofsPerNode  = size(q_grad, 1)
   Qx = Array(Tsbp, nNodesPerElem, nNodesPerElem, dim)
-  lambda_dqdx = Array(Tres, dim, nDofsPerNode, nNodesPerElem)
+  Fv = Array(Tres, dim, nDofsPerNode, nNodesPerElem)
   w = sview(sbp.w, :)
   # @bp
   for elem=1:nElems
     # compute Λ∇q
     lambda = sview(eqn.lambda, :,:,:,:, elem)
-    lambda_dqdx[:,:,:] = 0.0
+    Fv[:,:,:] = 0.0
     for d1 = 1:dim
       for d2 = 1:dim
         for node = 1:nNodesPerElem
           for ivar = 1:nDofsPerNode
-            lambda_dqdx[d1, ivar, node] += lambda[d1, d2, ivar, node]*q_grad[ivar, node, elem, d2]  
+            Fv[d1, ivar, node] += lambda[d1, d2, ivar, node]*q_grad[ivar, node, elem, d2]  
           end
         end
       end
@@ -243,7 +243,7 @@ function weakdifferentiate2!{Tmsh, Tsbp,Tflx,Tsol, Tres, Tdim}(mesh::AbstractMes
         for j = 1:sbp.numnodes
           for ivar = 1:nDofsPerNode
             # res[ivar, i, elem] += Qx[j,i,d]*q_grad[ivar, j, elem, d]/jac[j]
-            res[ivar, i, elem] += Qx[j,i,d]*lambda_dqdx[d, ivar, j]/jac[j]
+            res[ivar, i, elem] += Qx[j,i,d]*Fv[d, ivar, j]/jac[j]
           end
         end
       end
@@ -400,9 +400,9 @@ function calcDx{Tmsh}(mesh::AbstractMesh{Tmsh},
                       sbp::AbstractSBP,
                       elem::Int,
                       Dx::AbstractArray{Tmsh, 3})
-  @assert(size(Dx, 1) == mesh.numNodesPerElement)
-  @assert(size(Dx, 2) == mesh.numNodesPerElement)
-  @assert(size(Dx, 3) == size(mesh.dxidx, 1))
+  # @assert(size(Dx, 1) == mesh.numNodesPerElement)
+  # @assert(size(Dx, 2) == mesh.numNodesPerElement)
+  # @assert(size(Dx, 3) == size(mesh.dxidx, 1))
   dxidx = sview(mesh.dxidx, :,:,:,elem) # (dim, dim, numNodesPerElement)
   jac = mesh.jac[:, elem]
   Dx[:,:,:] = 0.0
@@ -428,9 +428,9 @@ function calcQx{Tmsh}(mesh::AbstractMesh{Tmsh},
                       sbp::AbstractSBP,
                       elem::Int,
                       Qx::AbstractArray{Tmsh, 3})
-  @assert(size(Qx, 1) == mesh.numNodesPerElement)
-  @assert(size(Qx, 2) == mesh.numNodesPerElement)
-  @assert(size(Qx, 3) == size(mesh.dxidx, 1))
+  # @assert(size(Qx, 1) == mesh.numNodesPerElement)
+  # @assert(size(Qx, 2) == mesh.numNodesPerElement)
+  # @assert(size(Qx, 3) == size(mesh.dxidx, 1))
   dxidx = sview(mesh.dxidx, :,:,:,elem) # (dim, dim, numNodesPerElement)
   jac = mesh.jac[:, elem]
   Qx[:,:,:] = 0.0

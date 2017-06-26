@@ -66,12 +66,14 @@ function run(fin::AbstractString)
     if haskey(opts, "exactFunctional")
       exactFunctional = opts["exactFunctional"]
     end
-    functional_value = Array(Tsol, mesh.numDofPerNode)
+    functional_value = Array(Tsol, 3)
     eqn.functional(mesh, sbp, eqn, opts, functional_value)
-    println("functional = ", abs(real(functional_value[1]) - exactFunctional))
+    println("functional_V = ", real(functional_value[1]))
+    println("functional_D = ", real(functional_value[2]))
+    println("functional_N = ", real(functional_value[3]))
     fname = "functional.dat"
     f = open(fname, "w")
-    println(f, abs(real(functional_value[1]) - exactFunctional))
+    println(f, real(functional_value))
   end
 
   eqn.assembleSolution(mesh, sbp, eqn, opts, eqn.q, eqn.q_vec)
