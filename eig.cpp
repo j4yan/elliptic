@@ -18,11 +18,15 @@ void BubbleSort(T* a, unsigned int n);
 
 int main(int argc, char **argv) {
 	ifstream fin;
-	string fname = "eigs1.dat";
+  string fname = "eigs_real1.dat";
+	// string fname = argv[1];
 	stringstream ss;
 	string line;
 	int nLines = 0;
 	fin.open(fname.c_str());
+  if (!fin.is_open()) {
+    return 0;
+  }
 	while (std::getline(fin, line)) {
 		++nLines;
 	}

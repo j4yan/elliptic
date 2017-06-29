@@ -48,6 +48,15 @@ function call{Tmsh, Tsol}(obj::DirichletPolynial2nd,
   gD[:] =  a*xy[1]*xy[1] + b*xy[1]*xy[2] + c*xy[2]*xy[2]
 end
 
+type DirichletHicken2011 <: AbstractDirichletBC
+end
+function call{Tmsh, Tsol}(obj::DirichletHicken2011,
+                          xy::AbstractArray{Tmsh},
+                          gD::AbstractArray{Tsol, 1}) 
+  ex = exp(xy[2])
+  tmp = pi * (exp(xy[1]) -1.0) / (e - 1.0)
+  gD[:] = ex * sin(tmp)
+end
 type NeumannTrig <: AbstractNeumannBC
 end
 function call{Tmsh, Tsol}(obj::NeumannTrig,
@@ -95,6 +104,7 @@ global const BCDict = Dict{ASCIIString, BCType}(
   "DirichletPolynial2nd" => DirichletPolynial2nd(),
   "DirichletTrig"        => DirichletTrig(),
   "DirichletExpTrig"     => DirichletExpTrig(),
+  "DirichletHicken2011"  => DirichletHicken2011(),
   "NeumannTrig"          => NeumannTrig(),
   "NeumannExpTrig"       => NeumannExpTrig(),
 )

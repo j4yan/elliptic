@@ -3,6 +3,7 @@ module EllipticEqnMod
 push!(LOAD_PATH, joinpath(Pkg.dir("PDESolver"), "src/Utils"))
 push!(LOAD_PATH, joinpath(Pkg.dir("PDESolver"), "src/NonlinearSolvers"))
 
+using PDESolver  # setup LOAD_PATH to find all PDESolver components
 using ArrayViews
 using ODLCommonTools
 using SummationByParts
@@ -237,16 +238,17 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
   functional::AbstractFunctional
   calc_energy::AbstractFunctional
   energy::Array{Tsol, 1}
+  ExactFunc::ExactSolutionType
   # diffusion coefficients
   lambda::Array{Tsol, 5} # (d1, d2, ndof, numnodes, n_elemes)
-  lambda_face::Array{Tsol, 6} # (d2, d1, ndof, L/R, numNodesPerFace, n_faces)
-  lambda_bndry::Array{Tsol, 5} # (d1, d2, ndof, numNodesPerface, n_bndfaces)
+  # lambda_face::Array{Tsol, 6} # (d2, d1, ndof, L/R, numNodesPerFace, n_faces)
+  # lambda_bndry::Array{Tsol, 5} # (d1, d2, ndof, numNodesPerface, n_bndfaces)
   q_grad::Array{Tsol, 4}    # gradient of q, (dim, numDofPerNode, numNodesPerElem, numElems)
   #
   # TBD: Not sure if we store gradient of q at face cubature points
   #
-  q_grad_face::Array{Tsol, 5} #(dim, numDofPerNode, left/right, numNodesPerFace, numFaces)
-  q_grad_bndry::Array{Tsol, 4} #(dim, numDofPerNode, numNodesPerFace, numBndries)
+  # q_grad_face::Array{Tsol, 5} #(dim, numDofPerNode, left/right, numNodesPerFace, numFaces)
+  # q_grad_bndry::Array{Tsol, 4} #(dim, numDofPerNode, numNodesPerFace, numBndries)
   #
   # end declaration of variables exclusively used in elliptic problems
   #
@@ -313,20 +315,20 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
     # interface variables
     #
     eqn.q_face    = zeros(Tsol, numvars, 2, numfacenodes, numfaces)
-    eqn.q_grad_face = zeros(Tsol, numvars, 2, numfacenodes, numfaces, Tdim)
+    # eqn.q_grad_face = zeros(Tsol, numvars, 2, numfacenodes, numfaces, Tdim)
     eqn.flux_face = zeros(Tsol, numvars, numfacenodes, numfaces)
     eqn.xflux_face = zeros(Tsol, numvars, numfacenodes, numfaces)
     eqn.yflux_face = zeros(Tsol, numvars, numfacenodes, numfaces)
-    eqn.lambda_face = zeros(Tsol, Tdim, Tdim, numvars, 2, numfacenodes, numfaces)
+    # eqn.lambda_face = zeros(Tsol, Tdim, Tdim, numvars, 2, numfacenodes, numfaces)
     #
     # boundary variables
     #
     eqn.q_bndry    = zeros(Tsol, numvars, numfacenodes, numBndFaces)
-    eqn.q_grad_bndry = zeros(Tsol, numvars, numfacenodes, numBndFaces, Tdim)
+    # eqn.q_grad_bndry = zeros(Tsol, numvars, numfacenodes, numBndFaces, Tdim)
     eqn.flux_bndry = zeros(Tsol, numvars, numfacenodes, numBndFaces)
     eqn.xflux_bndry = zeros(Tsol, numvars, numfacenodes, numBndFaces)
     eqn.yflux_bndry = zeros(Tsol, numvars, numfacenodes, numBndFaces)
-    eqn.lambda_bndry = zeros(Tsol, Tdim, Tdim, numvars, numfacenodes, numBndFaces)
+    # eqn.lambda_bndry = zeros(Tsol, Tdim, Tdim, numvars, numfacenodes, numBndFaces)
     #
     # reshape of q and res
     #
@@ -363,6 +365,9 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
     eqn.energy = zeros(Tsol, mesh.numDofPerNode)
     eqn.calc_energy = FunctionalDict["energy"]
 
+    if haskey(opts, "exactSolution")
+      eqn.ExactFunc = ExactDict[opts["exactSolution"]]
+    end
     eqn.istage = 1
     eqn.nstages = 1
     if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "SDIRK4"

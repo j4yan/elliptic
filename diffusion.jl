@@ -52,10 +52,29 @@ function call{Tmsh, Tsol}(obj::DiffnPoly0th,
 	return nothing
 end
 
+type DiffnHicken2011<: AbstractDiffn
+end
+
+function call{Tmsh, Tsol}(obj::DiffnHicken2011,
+						  xy::AbstractArray{Tmsh},
+						  lambda::AbstractArray{Tsol, 3})
+	# @assert(size(lambda, 1) == Tdim)
+	# @assert(size(lambda, 2) == Tdim)
+	# the 3rd dimension should be dof per node	
+	for dof = 1:size(lambda, 3)
+    lambda[1, 1, dof] = pi * exp(xy[1]) / (e - 1.0)
+    lambda[2, 2, dof] =lambda[1, 1, dof] 
+		lambda[1, 2, dof] = 0.0 
+		lambda[2, 1, dof] = 0.0
+	end
+	return nothing
+end
+
 global const DiffnDict = Dict{ASCIIString, AbstractDiffn}(
 	"poly0th" => DiffnPoly0th(),
 	"poly2nd" => DiffnPoly2nd(),
-	"poly6th" => DiffnPoly6th()
+	"poly6th" => DiffnPoly6th(),
+	"DiffnHicken2011" => DiffnHicken2011(),
 )
 
 function getDiffnFunc(mesh::AbstractMesh,

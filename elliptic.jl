@@ -1,6 +1,6 @@
-export evalElliptic, init, testOperatorGradientInterpolation, dataPrep, interpolateFace
+import PDESolver.evalResidual
+export evalResidual, evalElliptic, init, testOperatorGradientInterpolation, dataPrep, interpolateFace
 
-export evalRes
 using Debug
 function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                 sbp::AbstractSBP,
@@ -23,22 +23,15 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   dim = size(mesh.coords, 1)
 
   # interpolate diffusion from elements to faces
-  for d2 = 1 : dim
-    for d1 = 1 : dim
-      lambda_elem = slice(eqn.lambda, d1, d2, :, :, :)
-      lambda_face = slice(eqn.lambda_face, d1, d2, :, :, :, :)
-      lambda_bndry = slice(eqn.lambda_bndry, d1, d2, :, :, :)
-      interpolateFace(mesh, sbp, eqn, opts, lambda_elem, lambda_face)
-      interpolateBoundary(mesh, sbp, eqn, opts, lambda_elem, lambda_bndry)
-
-
-      # lambda_elem[:,:,:] = eqn.lambda[d1, d2, :,:,:]
+  # for d2 = 1 : dim
+    # for d1 = 1 : dim
+      # lambda_elem = slice(eqn.lambda, d1, d2, :, :, :)
+      # lambda_face = slice(eqn.lambda_face, d1, d2, :, :, :, :)
+      # lambda_bndry = slice(eqn.lambda_bndry, d1, d2, :, :, :)
       # interpolateFace(mesh, sbp, eqn, opts, lambda_elem, lambda_face)
       # interpolateBoundary(mesh, sbp, eqn, opts, lambda_elem, lambda_bndry)
-      # eqn.lambda_face[d1, d2, :,:,:,:] = lambda_face[:,:,:,:]
-      # eqn.lambda_bndry[d1, d2, :,:,:] = lambda_bndry[:,:,:]
-    end
-  end
+    # end
+  # end
   #
   # Debug: initialize the solution
   #
@@ -62,26 +55,26 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
 
         # eqn.q[v, n, e] += rand()*1.0e-1
         # eqn.q[v, n, e] = 0.5*xy[1] + 2.0*xy[2]
-        r = rand(1:100)
-        eqn.q[v,n,e] + r*1.0e-1
+        # r = rand(1:100)
+        # eqn.q[v,n,e] + r*1.0e-1
       end
     end
   end
 end
 
-function evalRes(mesh::AbstractMesh,
-                 sbp::AbstractSBP,
-                 eqn::EllipticData,
-                 opts,
-                 t=0.0)
+function evalResidual(mesh::AbstractMesh,
+                      sbp::AbstractSBP,
+                      eqn::EllipticData,
+                      opts::Dict,
+                      t=0.0)
   evalElliptic(mesh, sbp, eqn, opts)
 end
 
 function evalElliptic(mesh::AbstractMesh,
-                             sbp::AbstractSBP,
-                             eqn::EllipticData,
-                             opts,
-                             t=0.0)
+                      sbp::AbstractSBP,
+                      eqn::EllipticData,
+                      opts::Dict,
+                      t=0.0)
   dataPrep(mesh, sbp, eqn, opts)
   evalVolumeIntegrals(mesh, sbp, eqn, opts)
   evalFaceIntegrals(mesh, sbp, eqn, opts)
@@ -128,9 +121,9 @@ function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   calcGradient(mesh, sbp, eqn, eqn.q, eqn.q_grad)
 
   fill!(eqn.q_face, 0.0)
-  fill!(eqn.q_grad_face, 0.0)
+  # fill!(eqn.q_grad_face, 0.0)
   fill!(eqn.q_bndry, 0.0)
-  fill!(eqn.q_grad_bndry, 0.0)
+  # fill!(eqn.q_grad_bndry, 0.0)
 
   # interpolate diffusion from elements to faces
   # dim = size(mesh.coords, 1)
@@ -159,8 +152,8 @@ function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   interpolateBoundary(mesh, sbp, eqn, opts, eqn.q, eqn.q_bndry)
   interpolateFace(mesh, sbp, eqn, opts, eqn.q, eqn.q_face)
   # interpolate grad(q) from volume to interior edge and boundary edge
-  interpolateBoundary(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_bndry)
-  interpolateFace(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_face)
+  # interpolateBoundary(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_bndry)
+  # interpolateFace(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_face)
 
   fill!(eqn.xflux_face, 0.0)
   fill!(eqn.yflux_face, 0.0)
