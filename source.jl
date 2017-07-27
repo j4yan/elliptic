@@ -1,3 +1,12 @@
+type SrcZeros <: SRCType
+end
+function call(obj::SrcZeros, 
+              xy::AbstractVector, 
+              src::AbstractArray,
+              t=0.0)
+  src[:,:] = 0.0
+end
+
 type SrcExpTrigPoly0thDiffn <: SRCType
 end
 function call(obj::SrcExpTrigPoly0thDiffn, 
@@ -127,7 +136,7 @@ function call(obj::SrcTrigPoly2ndDiffnUnsteady,
   ss = sin(2*n*pi*xy[1])*sin(2*n*pi*xy[2])
   cc = cos(2*n*pi*xy[1])*cos(2*n*pi*xy[2])
   src[:] = 0.0
-  c = -10.0
+  c = -1.0
   for i = 1:length(src)
     src[i] += 6*n*pi*xy[1]*cs
     src[i] += 6*n*pi*xy[2]*sc
@@ -166,6 +175,7 @@ function call(obj::SrcTrigPoly6thDiffn,
 end
 
 global const SRCDict = Dict{ASCIIString, SRCType}(
+ "SrcZeros" => SrcZeros(),
  "SrcTrigPoly0thDiffn" => SrcTrigPoly0thDiffn(),
  "SrcExpTrigPoly0thDiffn" => SrcExpTrigPoly0thDiffn(),
  "SrcExpTrigPoly2ndDiffn" => SrcExpTrigPoly2ndDiffn(),

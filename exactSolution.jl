@@ -20,7 +20,7 @@ function call{Tmsh, Tsol}(obj::ExactTrigUnsteady,
                           q::AbstractArray{Tsol, 1},
                           t=0.0)  # (numDofPerNode))
   k = 2.0
-  c = -10
+  c = -1
   q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
   return nothing
 end
@@ -82,16 +82,17 @@ function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   # exactFunc = ExactDict[opts["exactSolution"]]
   exactFunc = eqn.ExactFunc
 
+  t = eqn.params.t
   lInfnorm = -1.0
   elem_with_max_dq = 0
   for el = 1 : mesh.numEl
     for n = 1 : mesh.numNodesPerElement
       xy = sview(mesh.coords, :, n, el)
-      exactFunc(xy, qe)
+      exactFunc(xy, qe, t)
       q = sview(eqn.q, :, n, el)
       jac = mesh.jac[n, el]
       for v = 1:mesh.numDofPerNode
-        dq = Real(q[v] - qe[v])
+        dq = real(q[v] - qe[v])
         # dq = Float64(q[v] - qe[v])
         l2norm += dq*dq*sbp.w[n]/jac
         if lInfnorm < abs(dq)

@@ -49,9 +49,11 @@ function run(fin::AbstractString)
   res_vec = eqn.res_vec
   q_vec = eqn.q_vec
 
-  # iterate(mesh, pmesh, sbp, eqn, opts)	
-  # solve_euler(mesh, sbp, eqn, opts, pmesh)
-  call_nlsolver(mesh, sbp, eqn, opts, pmesh)
+  if opts["run_type"] == 1 || opts["run_type"] == 30
+    call_nlsolver(mesh, sbp, eqn, opts, pmesh)
+  else
+    iterate(mesh, pmesh, sbp, eqn, opts)
+  end
 
   if haskey(opts, "exactSolution")
     l2norm, lInfnorm = calcErrorL2Norm(mesh, sbp, eqn, opts)
