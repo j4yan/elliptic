@@ -80,18 +80,12 @@ function evalElliptic(mesh::AbstractMesh,
   evalFaceIntegrals(mesh, sbp, eqn, opts)
   evalBoundaryIntegrals(mesh, sbp, eqn)
 
-  for e = 1:mesh.numEl
-    for n = 1:mesh.numNodesPerElement
-      for v = 1:mesh.numDofPerNode
-        # eqn.res[v,n,e] = -1.0*eqn.res[v,n,e]
-      end
+  if opts["run_type"] == 1 && opts["real_time"] == true
+    for i = 1 : length(eqn.res)
+      eqn.res[i] *= -1.0
     end
   end
 
-  # if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "BDF2"
-  # BDF2(mesh, sbp, eqn, opts)
-  # end
-  # @bp
   #
   # TODO: parallel commmunication
   #
@@ -199,10 +193,10 @@ end
 # where Λ is matrix coefficient
 #
 function weakdifferentiate2!{Tmsh, Tsbp,Tflx,Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
-                                                                      sbp::AbstractSBP{Tsbp},
-                                                                      eqn::EllipticData{Tsol, Tres, Tdim},
-                                                                      q_grad::AbstractArray{Tflx,4},
-                                                                      res::AbstractArray{Tres,3})
+                                                               sbp::AbstractSBP{Tsbp},
+                                                               eqn::EllipticData{Tsol, Tres, Tdim},
+                                                               q_grad::AbstractArray{Tflx,4},
+                                                               res::AbstractArray{Tres,3})
   # @assert (sbp.numnodes == size(q_grad, 2))
   # @assert (sbp.numnodes == size(res,2))
   # @assert (size(q_grad, 1) == size(res,1))    # numDofPerNode
@@ -251,11 +245,10 @@ end
 # TODO: put the integral of ∫∇v ⋅ (fx, fy) dΓ into a function,
 #       let's say interiorfaceintegrate2
 #
-function evalFaceIntegrals{Tmsh, Tsol, Tres, Tdim}(
-                                                          mesh::AbstractDGMesh{Tmsh},
-                                                          sbp::AbstractSBP,
-                                                          eqn::EllipticData{Tsol, Tres, Tdim},
-                                                          opts)
+function evalFaceIntegrals{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
+                                                   sbp::AbstractSBP,
+                                                   eqn::EllipticData{Tsol, Tres, Tdim},
+                                                   opts)
 
   #
   # Integrate face_flux

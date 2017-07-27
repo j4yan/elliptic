@@ -25,6 +25,18 @@ function call{Tmsh, Tsol}(obj::ExactTrigUnsteady,
   return nothing
 end
 
+type ExactTrigSlightUnsteady <: ExactSolutionType
+end
+function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady, 
+                          xy::AbstractArray{Tmsh}, 
+                          q::AbstractArray{Tsol, 1},
+                          t=0.0)  # (numDofPerNode))
+  k = 2.0
+  c = -1.0
+  q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
+  return nothing
+end
+
 
 type ExactExpTrig <: ExactSolutionType
 end
@@ -66,6 +78,7 @@ end
 global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
  "ExactTrig" => ExactTrig(),
  "ExactTrigUnsteady" => ExactTrigUnsteady(),
+ "ExactTrigSlightUnsteady" => ExactTrigSlightUnsteady(),
  "ExactPoly2nd" => ExactPoly2nd(),
  "ExactExpTrig" => ExactExpTrig(),
  "ExactHicken2011" => ExactHicken2011(),
@@ -76,6 +89,7 @@ function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                            sbp::AbstractSBP,
                                            eqn::AbstractEllipticData{Tsol, Tres},
                                            opts)
+  t = eqn.params.t
   l2norm::Float64 = 0.
   lInfnorm::Float64 = 0.
   qe = Array(Tsol, mesh.numDofPerNode)
@@ -87,11 +101,11 @@ function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   for el = 1 : mesh.numEl
     for n = 1 : mesh.numNodesPerElement
       xy = sview(mesh.coords, :, n, el)
-      exactFunc(xy, qe)
+      exactFunc(xy, qe, t)
       q = sview(eqn.q, :, n, el)
       jac = mesh.jac[n, el]
       for v = 1:mesh.numDofPerNode
-        dq = Real(q[v] - qe[v])
+        dq = real(q[v] - qe[v])
         # dq = Float64(q[v] - qe[v])
         l2norm += dq*dq*sbp.w[n]/jac
         if lInfnorm < abs(dq)

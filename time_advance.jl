@@ -93,7 +93,8 @@ end
 function evalRes{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh}, 
                                                sbp::AbstractSBP{Tsbp}, 
                                                eqn::EllipticData{Tsol, Tres, Tdim}, 
-                                               opts) 		
+                                               opts,
+                                               t=0.0) 		
   evalElliptic(mesh, sbp, eqn, opts)
 
   if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "BDF2"
@@ -121,6 +122,10 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     eqn.calc_energy(mesh, sbp, eqn, opts, eqn.energy)
     println(f, 0, ", ", real(eqn.energy[1]))
+  end
+
+  if haskey(opts, "exactSolution")
+    ferr = open("unsteady_error.dat", "w")
   end
 
   #
@@ -212,6 +217,8 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     end
 
+    eqn.params.t += dt 
+
     if haskey(opts, "write_energy") && opts["write_energy"] == true
       eqn.calc_energy(mesh, sbp, eqn, opts, eqn.energy)
       println(f, t, ", ", real(eqn.energy[1]))
@@ -219,6 +226,12 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
       if real(eqn.energy[1]) < 1.e-12
         break
       end
+    end
+
+    if haskey(opts, "exactSolution")
+      l2norm, lInfNorm = calcErrorL2Norm(mesh, sbp, eqn, opts)
+      println(ferr, t, "    ", l2norm)
+      flush(ferr)
     end
   end
   if haskey(opts, "write_energy") && opts["write_energy"] == true
