@@ -2,6 +2,19 @@ abstract ExactSolutionType
 
 export ExactSolutionType, ExactTrig, calcErrorL2Norm
 
+type ExactMappingUnsteady <: ExactSolutionType
+end
+function call{Tmsh, Tsol}(obj::ExactMappingUnsteady,
+                          xy::AbstractArray{Tmsh},
+                          q::AbstractArray{Tsol, 1},
+                          t=0.0)  # (numDofPerNode))
+  c = -1.0
+  xi  = xy[1] + 0.2*sin(pi*xy[1])*sin(pi*xy[2])
+  eta = xy[2] + 0.2*sin(pi*xy[1])*sin(pi*xy[2])
+  q[:] = sin(pi*xi)*sin(pi*eta) * exp(c*t)
+  return nothing
+end
+
 type ExactTrig <: ExactSolutionType
 end
 function call{Tmsh, Tsol}(obj::ExactTrig, 
@@ -66,6 +79,7 @@ end
 global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
  "ExactTrig" => ExactTrig(),
  "ExactTrigUnsteady" => ExactTrigUnsteady(),
+ "ExactMappingUnsteady" => ExactMappingUnsteady(),
  "ExactPoly2nd" => ExactPoly2nd(),
  "ExactExpTrig" => ExactExpTrig(),
  "ExactHicken2011" => ExactHicken2011(),

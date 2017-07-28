@@ -18,9 +18,6 @@ function call{Tmsh, Tsol}(obj::DirichletTrig,
                           q::AbstractArray{Tsol, 1})  
   k = 2.0
   q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
-  if abs(q[1]) > 1.0E-10
-    error("some problem!")
-  end
   return nothing
 end
 type DirichletExpTrig <: AbstractDirichletBC

@@ -1,5 +1,34 @@
 abstract AbstractDiffn
 
+type DiffnMapping<: AbstractDiffn
+end
+function call{Tmsh, Tsol}(obj::DiffnMapping,
+                          xy::AbstractArray{Tmsh},
+                          lambda::AbstractArray{Tsol, 3})
+  # @assert(size(lambda, 1) == Tdim)
+  # @assert(size(lambda, 2) == Tdim)
+  # the 3rd dimension should be dof per node	
+  c = 0.2
+  cs = cos(pi*xy[1])*sin(pi*xy[2])
+  sc = sin(pi*xy[1])*cos(pi*xy[2])
+  dxi_dx  = 1. + c*pi*cs
+  dxi_dy  = 0. + c*pi*sc
+  deta_dx = 0. + c*pi*cs
+  deta_dy = 1. + c*pi*sc
+  J = dxi_dx * deta_dy - dxi_dy*deta_dx
+  for dof = 1:size(lambda, 3)
+    lambda[1, 1, dof] =  (deta_dx*deta_dx + deta_dy*deta_dy)
+    lambda[2, 2, dof] =  (dxi_dx *dxi_dx  + dxi_dy *dxi_dy)  
+    lambda[1, 2, dof] = -(dxi_dx *deta_dx + dxi_dy *deta_dy)
+    lambda[1, 1, dof] /= 2*pi*pi*J
+    lambda[1, 2, dof] /= 2*pi*pi*J
+    lambda[2, 2, dof] /= 2*pi*pi*J
+		lambda[2, 1, dof] = lambda[1, 2, dof]
+    @assert((lambda[1,1,dof]*lambda[2,2,dof] - lambda[1,2,dof]*lambda[2,1,dof]) > 0.0)
+	end
+	return nothing
+end
+
 type DiffnPoly2nd<: AbstractDiffn
 end
 function call{Tmsh, Tsol}(obj::DiffnPoly2nd,
@@ -74,6 +103,7 @@ global const DiffnDict = Dict{ASCIIString, AbstractDiffn}(
 	"poly0th" => DiffnPoly0th(),
 	"poly2nd" => DiffnPoly2nd(),
 	"poly6th" => DiffnPoly6th(),
+  "DiffnMapping" => DiffnMapping(),
 	"DiffnHicken2011" => DiffnHicken2011(),
 )
 

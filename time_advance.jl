@@ -9,10 +9,24 @@ function BDF2{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
     q = sview(eqn.q, :, :, el )
     q1 = sview(eqn.q1, :, :, el )
     q2 = sview(eqn.q2, :, :, el )
+
     for n = 1:mesh.numNodesPerElement 
+      J = 1.0
+      if opts["Diffusion"] == "DiffnMapping"
+        c = 0.2
+        xy = sview(mesh.coords, :, n, el)
+        cs = cos(pi*xy[1])*sin(pi*xy[2])
+        sc = sin(pi*xy[1])*cos(pi*xy[2])
+        dxi_dx  = 1. + c*pi*cs
+        dxi_dy  = 0. + c*pi*sc
+        deta_dx = 0. + c*pi*cs
+        deta_dy = 1. + c*pi*sc
+        J = dxi_dx * deta_dy - dxi_dy*deta_dx
+        @assert(J > 0.0)
+      end
       for dof = 1:mesh.numDofPerNode
         dqdt = (1.5*q[dof, n] - 2.0*q1[dof, n] + 0.5*q2[dof, n])/dt
-        eqn.res[dof, n, el] += sbp.w[n]/jac[n]*dqdt
+        eqn.res[dof, n, el] += sbp.w[n]/jac[n]*dqdt * J
       end
     end
   end
