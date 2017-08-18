@@ -1,9 +1,17 @@
 export interpolateFace
-#
-# Given variables q at elem_volume nodes, compute corresponding gradients
-# TODO: a higher level function
-#
+"""
+  Given variables q at elem_volume nodes, compute corresponding gradients
 
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+   * q: the variable (usually the solution) the gradient of which we are computing
+
+   **Input/Output**
+    * q_grad: the gradient of q
+
+"""
 function calcGradient{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractDGMesh{Tmsh},
                                                     sbp::AbstractSBP{Tsbp},
                                                     eqn::EllipticData{Tsol, Tres, Tdim},
@@ -44,6 +52,19 @@ function calcGradient{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractDGMesh{Tmsh},
   end
 end
 
+
+"""
+similar to [`interpolateBoundary`](@ref); interpolate some scalar variable (usually the solution) from elements to interfaces. We may not need it any more if the evaluation of residual is rewritten as volume/face-based.
+
+  **Inputs**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+   * q: the variable to be interpolated
+   * q_face: the variable on the boundary
+
+"""
 function interpolateFace{Tsol}(mesh::AbstractDGMesh,
                                sbp,
                                eqn,
@@ -68,9 +89,23 @@ function interpolateFace{Tsol, Tres, Tdim}(mesh::AbstractDGMesh,
   end
 end
 
-#
-# Calculate flux at edge cubature points using face-based form.
-#
+"""
+  Calculate flux at edge cubature points using face-based form. Only works for BR2 and SIPG.
+  all the flux can be categorized into two groups, ∫ v f dΓ, and ∫ ∇⋅F dΓ
+
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+   * interfaces: interfaces on which we are computing fluxes
+
+  **Input/Output**
+   * xflux_face: x component of `F`
+   * yflux_face: y component of `F`
+   * flux_face: the scalar flux `f`
+
+"""
 function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
                                                      sbp::AbstractSBP,
                                                      eqn::EllipticData{Tsol, Tres, Tdim},
@@ -207,6 +242,24 @@ function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
 end # end of function calcFaceFlux
 
 
+"""
+
+  Similar to [`cmptFv_bndry`](@ref);
+  Compute the diffusion flux on an interface. There are possibly two ways: 
+    1). interpolate the solution from element to interface, and then compute
+        the flux.
+    2). compute the elememt flux and then interpolate the flux instead of solution to interface.
+  The experiments show suble difference between two approaches. But the theoretical
+  proof in the journal paper uses the second one.
+
+  **Input**
+   * mesh
+   * eqn
+   * iface: index of boundary face
+
+  **Input/Output**
+   * Fv_face: the diffusion flux
+"""
 function cmptFv_interface{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh}, 
                                                   eqn::EllipticData{Tsol, Tres, Tdim},
                                                   iface::Int, 
@@ -284,6 +337,20 @@ function cmptFv_interface{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   return nothing
 end
 
+"""
+  compute the interior penalty matrix
+
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+   * iface: the index of interface
+
+  **Input/Output**
+   * pMat: penalty matrix
+
+"""
 function cmptIPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                            sbp::AbstractSBP,
                                            eqn::EllipticData{Tsol, Tres, Tdim},

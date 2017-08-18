@@ -86,6 +86,18 @@ global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
 )
 
 
+"""
+  calculate the l2norm of the error.
+
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+
+  **Output**
+   l2norm: l2-norm of the error
+"""
 function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                            sbp::AbstractSBP,
                                            eqn::AbstractEllipticData{Tsol, Tres},
