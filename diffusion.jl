@@ -1,13 +1,25 @@
+"""
+
+  Functor type to compute diffusion coefficients.  
+
+"""
 abstract AbstractDiffn
 
+"""
+  
+  a diffusion coefficent:
+    | x^2+1   xy  |
+    |  xy   y^2+1 |
+
+"""
 type DiffnPoly2nd<: AbstractDiffn
 end
 function call{Tmsh, Tsol}(obj::DiffnPoly2nd,
-						  xy::AbstractArray{Tmsh},
-						  lambda::AbstractArray{Tsol, 3})
-	# @assert(size(lambda, 1) == Tdim)
-	# @assert(size(lambda, 2) == Tdim)
-	# the 3rd dimension should be dof per node	
+                          xy::AbstractArray{Tmsh},
+                          lambda::AbstractArray{Tsol, 3})
+  # @assert(size(lambda, 1) == Tdim)
+  # @assert(size(lambda, 2) == Tdim)
+  # the 3rd dimension should be dof per node	
 	for dof = 1:size(lambda, 3)
 		lambda[1, 1, dof] = xy[1]*xy[1] + 1.0
 		lambda[1, 2, dof] = xy[1]*xy[2]
@@ -17,6 +29,13 @@ function call{Tmsh, Tsol}(obj::DiffnPoly2nd,
 	return nothing
 end
 
+"""
+
+  a diffusion coefficient:
+    |x^6+1   (xy)^3|
+    |(xy)^3   y^6+1|
+
+"""
 type DiffnPoly6th<: AbstractDiffn
 end
 function call{Tmsh, Tsol}(obj::DiffnPoly6th,
@@ -34,6 +53,11 @@ function call{Tmsh, Tsol}(obj::DiffnPoly6th,
 	return nothing
 end
 
+"""
+
+  a constant diffusion coefficient
+
+"""
 type DiffnPoly0th<: AbstractDiffn
 end
 
@@ -52,6 +76,12 @@ function call{Tmsh, Tsol}(obj::DiffnPoly0th,
 	return nothing
 end
 
+"""
+
+  Diffusion coefficient used by Hicken2011 siam jsc.
+  This one is used since the adjoint bc is consitent with the objective.
+
+"""
 type DiffnHicken2011<: AbstractDiffn
 end
 
@@ -70,6 +100,13 @@ function call{Tmsh, Tsol}(obj::DiffnHicken2011,
 	return nothing
 end
 
+"""
+  
+  Dictionary to look up a diffusion function. Everything a 
+  new diffusion function is created, we need to add it 
+  to this dictionary.
+
+"""
 global const DiffnDict = Dict{ASCIIString, AbstractDiffn}(
 	"poly0th" => DiffnPoly0th(),
 	"poly2nd" => DiffnPoly2nd(),
@@ -77,11 +114,24 @@ global const DiffnDict = Dict{ASCIIString, AbstractDiffn}(
 	"DiffnHicken2011" => DiffnHicken2011(),
 )
 
+"""
+
+  get the function to compute diffusion coefficients
+  
+  **Input**
+   * mesh
+   * sbp
+   * opts
+
+  **Input/Output**
+   * eqn
+
+"""
 function getDiffnFunc(mesh::AbstractMesh,
-					  sbp::AbstractSBP,
-					  eqn::EllipticData,
-					  opts)
-	eqn.diffusion_func = DiffnDict[opts["Diffusion"]]
+                      sbp::AbstractSBP,
+                      eqn::EllipticData,
+                      opts)
+  eqn.diffusion_func = DiffnDict[opts["Diffusion"]]
 end
 
 function calcDiffn{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
