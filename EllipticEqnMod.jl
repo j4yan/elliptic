@@ -17,10 +17,20 @@ import ODLCommonTools.sview
 export AbstractEllipticData, EllipticData, EllipticData_, iterate
 
 
+"""
+ 
+  This type holds the values of any constants or parameters needed during
+  the computaition. These paramters can be specified in the opts dictionary or
+  have default values set here.  If there is no reasonable default, values
+  are initialized to -1. Currently there are many variables that are not 
+  used. Need to clean up.
+
+"""
 type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
   f::IOStream
   t::Float64  # current time value
   order::Int  # accuracy of elements (p=1,2,3...)
+  time::Timings
 
   q_vals::Array{Tsol, 1}  # resuable temporary storage for q variables at a node
   qg::Array{Tsol, 1}  # reusable temporary storage for boundary condition
@@ -149,6 +159,18 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
 
 end  # end type declaration
 
+
+"""
+  
+  compute the constant coefficient in inverse trace inequality.
+
+  **Input**
+   * sbp
+   * sbpface
+
+  **Output**
+  * delta
+"""
 function cmpt_const_delta{Tsbp}(sbp::AbstractSBP{Tsbp}, sbpface)
   R = sview(sbpface.interp, :,:)
   BsqrtRHinvRtBsqrt = Array(Tsbp, sbpface.numnodes, sbpface.numnodes)
@@ -187,6 +209,18 @@ include("exactSolution.jl")
 include("diffusion.jl")
 include("functional.jl")
 
+
+"""
+
+  This type is an implimentation of the abstract [`EllipticData`](@ref).  It is
+  paramterized by the residual datatype Tres and the mesh datatype Tmsh
+  because it stores some arrays of those types.  Tres is the 'maximum' type of
+  Tsol and Tmsh. 
+  Currently, some variables are precomputed and stored in a very large array 
+  before integration. These variables include fluxes, gradient , and source term. 
+  It is unnecessary and will be changed in future.
+
+"""
 type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
   params::ParamType{Tdim, Tsol, Tres, Tmsh}
   comm::MPI.Comm
@@ -212,16 +246,16 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
   yflux_face::Array{Tres, 3}    # stores (u+ - u-)ny*
   flux_face ::Array{Tres, 3}    # stores σ⋅norm
 
-  xflux_bndry::Array{Tres, 3}    # stores (u+ - u-)nx*, (numDofs, numNodes, numFaces)
-  yflux_bndry::Array{Tres, 3}    # stores (u+ - u-)ny*
-  flux_bndry ::Array{Tres, 3}    # stores σ⋅norm
+  xflux_bndry::Array{Tres, 3}   # stores (u+ - u-)nx*, (numDofs, numNodes, numFaces)
+  yflux_bndry::Array{Tres, 3}   # stores (u+ - u-)ny*
+  flux_bndry ::Array{Tres, 3}   # stores σ⋅norm
 
-  res::Array{Tres, 3}            # result of computation (numDofs, numNodesPerElem, numElems)
-  res_irk::Array{Tres, 4}            # result of computation (numDofs, numNodesPerElem, numElems)
-  res1::Array{Float64, 3}            # result of computation (numDofs, numNodesPerElem, numElems)
-  res_vec::Array{Tres, 1}         # result of computation in vector form
-  q_vec::Array{Tres,1}            # initial condition in vector form
-  q_bndry::Array{Tsol, 3}         # store solution variables interpolated to
+  res::Array{Tres, 3}           # result of computation (numDofs, numNodesPerElem, numElems)
+  res_irk::Array{Tres, 4}       # result of computation (numDofs, numNodesPerElem, numElems)
+  res1::Array{Float64, 3}       # result of computation (numDofs, numNodesPerElem, numElems)
+  res_vec::Array{Tres, 1}       # result of computation in vector form
+  q_vec::Array{Tres,1}          # initial condition in vector form
+  q_bndry::Array{Tsol, 3}       # store solution variables interpolated to
 
   #q_face_send::Array{Array{Tsol, 3}, 1}    # send buffers for sending q values
   # to other processes
@@ -383,6 +417,18 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
   end # end function
 end # end type
 
+"""
+
+  compute the area-based weights used in volume term splitting.
+
+  **Input**
+   * mesh
+   * sbp
+
+  **Input/Output**
+   * eqn
+
+"""
 function calcWetArea{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                              sbp::AbstractSBP,
                                              eqn::EllipticData{Tsol, Tres, Tdim})
@@ -447,6 +493,21 @@ function calcWetArea{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   end
   return nothing
 end
+
+"""
+
+  calculate the mass matrix for each element. I don't know what's it used for, 
+  probably postprocessing or in ODE solver.  
+
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+
+  **Output**
+   * M : the mass matrix
+
+"""
 function calcMassMatrix{Tmsh,  Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                                  sbp::AbstractSBP,
                                                  eqn::EllipticData{Tsol, Tres, Tdim})
@@ -470,6 +531,20 @@ function calcMassMatrix{Tmsh,  Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
 
 end     # end of calcMassMatrix function
 
+"""
+
+  calculate the inverse of mass matrix for each element. I don't know what's it used for, 
+  probably postprocessing or in ODE solver.  
+
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+
+  **Output**
+   * M : the mass matrix
+
+"""
 function calcMassMatrixInverse{Tmsh,  Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                                         sbp::AbstractSBP,
                                                         eqn::EllipticData{Tsol, Tres, Tdim})
