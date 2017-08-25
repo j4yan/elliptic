@@ -109,12 +109,36 @@ global const BCDict = Dict{ASCIIString, BCType}(
   "NeumannExpTrig"       => NeumannExpTrig(),
 )
 
+"""
+
+  defines what kind of a boundary condition is, Dirichlet, or Neumann.
+
+  **Input**
+   * dBC: an object of [`BCType`](@ref)
+
+  **Output**
+   true if the boundary condition is of type [`AbstractDirichletBC`]; false if it is not
+
+"""
+
 function isDirichlet(dBC::AbstractDirichletBC)
   return true
 end
 function isDirichlet(dBC::AbstractNeumannBC)
   return false
 end
+
+"""
+
+  similar to [`isDirichlet`](@ref) 
+
+  **Input**
+   * dBC: an object of [`BCType`](@ref)
+
+  **Output**
+   true if the boundary condition is of type [`AbstractDirichletBC`]; false if it is not
+
+"""
 
 function isNeumann(dBC::AbstractDirichletBC)
   return false
@@ -123,6 +147,20 @@ function isNeumann(dBC::AbstractNeumannBC)
   return true
 end
 
+"""
+
+  get the boundary functions into mesh.bndry_funcs.
+
+  **Inputs**
+   * sbp
+   * opts
+   * opts
+
+  **Inputs/Ouptput**
+   * mesh
+
+"""
+
 function getBCFunctors(mesh::AbstractMesh, sbp::AbstractSBP, eqn::EllipticData, opts)
   for i = 1:mesh.numBC
     key = string("BC", i, "_name")
@@ -130,6 +168,22 @@ function getBCFunctors(mesh::AbstractMesh, sbp::AbstractSBP, eqn::EllipticData, 
     mesh.bndry_funcs[i] = BCDict[val]
   end
 end
+
+"""
+
+  interpolate some scalar variable (usually the solution) from elements to interfaces.
+
+  **Inputs**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+   * q: the variable to be interpolated
+
+  **Input/Output**
+   * q_bndry: the variable on the boundary
+
+"""
 
 function interpolateBoundary{Tsol, Tres}(mesh::AbstractDGMesh,
                                          sbp::AbstractSBP,
@@ -156,6 +210,21 @@ function interpolateBoundary{Tsol, Tres}(mesh::AbstractDGMesh,
     boundaryinterpolate!(mesh.sbpface, mesh.bndryfaces, g, g_bndry)
   end
 end
+
+"""
+
+  compute the SAT term and assemble into eqn.res
+  TODO: Currently it only works for SBP-BR2 and SBP-SIPG. We may need to
+        extend it to CDG (compact discontinuous galerkin). 
+
+  **Input**
+   * mesh
+   * sbp
+   * opts
+
+  **Input/Output**
+   * eqn
+"""
 
 function getBCFluxes{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                              sbp::AbstractSBP,
@@ -315,6 +384,17 @@ function getBCFluxes{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   return nothing 
 end
 
+"""
+  compute the boundary penalty matrix
+  **Input**
+   * mesh
+   * sbp
+   * eqn
+   * opts
+   * iface: the index of boundary face
+  **Input/Output**
+   * pMat: penalty matrix
+"""
 
 function cmptBPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
                                                    sbp::AbstractSBP,
@@ -415,7 +495,23 @@ function cmptBPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   end
 end
 
+"""
+  compute the diffusion flux on a boundary face. There are possibly two ways: 
+    1). interpolate the solution from element to boundary face, and then compute
+        the flux.
+    2). compute the elememt flux and then interpolate it to boundary face.
+  The experiments show suble difference between two approaches. But the theoretical
+  proof in the journal paper uses the second one.
 
+  **Input**
+   * mesh
+   * eqn
+   * iface: index of boundary face
+
+  **Input/Output**
+   * Fv_face: the diffusion flux
+
+"""
 function cmptFv_bndry{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh}, 
                                               eqn::EllipticData{Tsol, Tres, Tdim},
                                               iface::Int, 
