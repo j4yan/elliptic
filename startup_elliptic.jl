@@ -69,12 +69,12 @@ function run(fin::AbstractString)
     if haskey(opts, "exactFunctional")
       exactFunctional = opts["exactFunctional"]
     end
-    functional_value = Array(Tsol, 3)
+    functional_value = zeros(Tsol, 3)
     eqn.functional(mesh, sbp, eqn, opts, functional_value)
     println("functional_V = ", real(functional_value[1]))
     println("functional_D = ", real(functional_value[2]))
     println("functional_N = ", real(functional_value[3]))
-    fname = "functional.dat"
+    fname = "steady_functional.dat"
     f = open(fname, "w")
     println(f, real(functional_value))
   end

@@ -266,7 +266,7 @@ end
 global const FunctionalDict = Dict{ASCIIString, AbstractFunctional}( 
   "FuncHicken2011" => FuncHicken2011(),
   "volumeAverage" => volumeAverage(),
-  "energy" => volumeEnergy()
+  "volumeEnergy" => volumeEnergy(),
 )
 
 function getFunctional(mesh::AbstractMesh,

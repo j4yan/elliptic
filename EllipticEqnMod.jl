@@ -30,7 +30,7 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
   f::IOStream
   t::Float64  # current time value
   order::Int  # accuracy of elements (p=1,2,3...)
-  time::Timings
+  # time::Timings
 
   q_vals::Array{Tsol, 1}  # resuable temporary storage for q variables at a node
   qg::Array{Tsol, 1}  # reusable temporary storage for boundary condition
@@ -397,7 +397,7 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
       end
     end
     eqn.energy = zeros(Tsol, mesh.numDofPerNode)
-    eqn.calc_energy = FunctionalDict["energy"]
+    eqn.calc_energy = FunctionalDict["volumeEnergy"]
 
     if haskey(opts, "exactSolution")
       eqn.ExactFunc = ExactDict[opts["exactSolution"]]

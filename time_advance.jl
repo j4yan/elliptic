@@ -128,6 +128,9 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
     ferr = open("unsteady_error.dat", "w")
   end
 
+  if haskey(opts, "Functional")
+    ffunc = open("unsteady_functional.dat", "w")
+  end
   #
   # initialize q1 and q2
   #
@@ -157,6 +160,15 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
     end
   end
 
+  newton_data, jac, rhs_vec = setupNewton(mesh, pmesh, sbp, eqn, opts, evalRes, alloc_rhs=false)
+  ctx_residual = (evalRes, )
+  jac_func = physicsJac
+  rhs_func = physicsRhs
+
+  step_tol = 1.0e-6
+  res_abstol = opts["res_abstol"]
+  res_reltol = opts["res_reltol"]
+  res_reltol0=opts["res_reltol0"]
   for t = 1:ntimestep
     #
     # Initialize solution at 1st stage
@@ -173,12 +185,21 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     eqn.istage = 1
     for s = 1:eqn.nstages
-      newton(evalRes, mesh, sbp, eqn, opts, pmesh, 
-             itermax=opts["itermax"],
-             step_tol=opts["step_tol"], 
-             res_abstol=opts["res_abstol"],
-             res_reltol=opts["res_reltol"], 
-             res_reltol0=opts["res_reltol0"])
+      # newton(evalRes, mesh, sbp, eqn, opts, pmesh, 
+             # eqn.params.t,
+             # itermax=opts["itermax"],
+             # step_tol=opts["step_tol"], 
+             # res_abstol=opts["res_abstol"],
+             # res_reltol=opts["res_reltol"], 
+             # res_reltol0=opts["res_reltol0"])
+
+      newtonInner(newton_data, mesh, sbp, eqn, opts, 
+                  rhs_func, jac_func, jac, rhs_vec, 
+                  ctx_residual, eqn.params.t,
+                  itermax=1, step_tol=step_tol, 
+                  res_abstol=res_abstol, 
+                  res_reltol=res_reltol, 
+                  res_reltol0=res_reltol0)
 
       #
       # update old variables, i.e., q1, q2, res1
@@ -219,9 +240,10 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     eqn.params.t += dt 
 
+    # postprocessing
     if haskey(opts, "write_energy") && opts["write_energy"] == true
       eqn.calc_energy(mesh, sbp, eqn, opts, eqn.energy)
-      println(f, t, ", ", real(eqn.energy[1]))
+      println(f, t, " ", real(eqn.energy[1]))
       flush(f)
       if real(eqn.energy[1]) < 1.e-12
         break
@@ -233,9 +255,22 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
       println(ferr, t, "    ", l2norm)
       flush(ferr)
     end
+
+    if haskey(opts, "Functional")
+      functional_value = zeros(Tsol, 3)
+      eqn.functional(mesh, sbp, eqn, opts, functional_value)
+      println(ffunc, t, " ", real(functional_value[1]))
+      flush(ffunc)
+    end
   end
   if haskey(opts, "write_energy") && opts["write_energy"] == true
     close(f)
+  end
+  if haskey(opts, "exactFunctional")
+    close(ffunc)
+  end
+  if haskey(opts, "exactSolution")
+    close(ferr)
   end
   return nothing
 end

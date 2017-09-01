@@ -22,41 +22,14 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   calcDiffn(mesh, sbp, eqn, eqn.diffusion_func, eqn.lambda)
   dim = size(mesh.coords, 1)
 
-  # interpolate diffusion from elements to faces
-  # for d2 = 1 : dim
-    # for d1 = 1 : dim
-      # lambda_elem = slice(eqn.lambda, d1, d2, :, :, :)
-      # lambda_face = slice(eqn.lambda_face, d1, d2, :, :, :, :)
-      # lambda_bndry = slice(eqn.lambda_bndry, d1, d2, :, :, :)
-      # interpolateFace(mesh, sbp, eqn, opts, lambda_elem, lambda_face)
-      # interpolateBoundary(mesh, sbp, eqn, opts, lambda_elem, lambda_bndry)
-    # end
-  # end
-  #
-  # Debug: initialize the solution
-  #
-  k = 2.0
 
-  for e = 1:mesh.numEl
+  initFunc = ExactDict[opts["IC"]]
+  for el = 1:mesh.numEl
     for n = 1:mesh.numNodesPerElement
-      xy = sview(mesh.coords, :, n, e)
+      xy = sview(mesh.coords, :, n, el)
       for v = 1:mesh.numDofPerNode
-        eqn.q[v, n, e] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
-
-        # a = 1.0
-        # b = 1.0
-        # c = 1.0
-        # eqn.q[v, n, e] = a*xy[1]*xy[1] + b*xy[1]*xy[2] + c*xy[2]*xy[2]
-
-        # eqn.q[v, n, e] = 0.1*mesh.coords[1, n, e] + 10.0*mesh.coords[2, n, e]
-
-        # eqn.q[v, n, e] = -0.25*xy[1]*xy[1] - 0.25*xy[2]*xy[2]
-
-
-        # eqn.q[v, n, e] += rand()*1.0e-1
-        # eqn.q[v, n, e] = 0.5*xy[1] + 2.0*xy[2]
-        # r = rand(1:100)
-        # eqn.q[v,n,e] + r*1.0e-1
+        q = sview(eqn.q, :, n, el)
+        initFunc(xy, q)
       end
     end
   end
