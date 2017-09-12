@@ -49,7 +49,7 @@ function run(fin::AbstractString)
   res_vec = eqn.res_vec
   q_vec = eqn.q_vec
 
-  if opts["run_type"] == 1 || opts["run_type"] == 30
+  if opts["run_type"] == 1 || opts["run_type"] == 30 || opts["write_eigs"]
     call_nlsolver(mesh, sbp, eqn, opts, pmesh)
   else
     iterate(mesh, pmesh, sbp, eqn, opts)	

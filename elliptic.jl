@@ -23,7 +23,27 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   dim = size(mesh.coords, 1)
 
 
-  initFunc = ExactDict[opts["IC"]]
+  if haskey(opts, "IC") && opts["IC"] == "random"
+    k = 1.0
+    for e = 1:mesh.numEl
+      for n = 1:mesh.numNodesPerElement
+        xy = sview(mesh.coords, :, n, e)
+        for v = 1:mesh.numDofPerNode
+          eqn.q[v, n, e] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+          r = rand(1:100)
+          eqn.q[v,n,e] + r*1.0e-1
+        end
+      end
+    end
+    return nothing
+  end
+
+
+  if haskey(opts, "IC")
+    initFunc = ExactDict[opts["IC"]]
+  else
+    initFunc = ExactDict["ExactTrig"]
+  end
   for el = 1:mesh.numEl
     for n = 1:mesh.numNodesPerElement
       xy = sview(mesh.coords, :, n, el)
@@ -59,6 +79,15 @@ function evalElliptic(mesh::AbstractMesh,
     end
   end
 
+  if haskey(opts, "strong_form") && opts["strong_form"]
+    for el = 1 : mesh.numEl
+      for i = 1 : mesh.numNodesPerElement
+        for j = 1 : mesh.numDofPerNode
+          eqn.res[j,i,el] *= mesh.jac[i,el] / sbp.w[i]
+        end
+      end
+    end
+  end
   #
   # TODO: parallel commmunication
   #

@@ -79,6 +79,7 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
   
   const_delta::Tmsh
 
+  recompute_jac::Bool
   function ParamType(mesh, sbp, opts, order::Integer)
     # create values, apply defaults
 
@@ -146,6 +147,7 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
 
     const_delta = cmpt_const_delta(sbp, mesh.sbpface)
 
+    recompute_jac = true
     return new(f, t, order, q_vals, qg, v_vals, res_vals1, res_vals2, sat_vals, flux_vals1,
                flux_vals2, A0, A0inv, A1, A2, A_mats, Rmat1, Rmat2, nrm,
                edgestab_gamma, writeflux, writeboundary,
@@ -153,7 +155,8 @@ type ParamType{Tdim, Tsol, Tres, Tmsh} <: AbstractParamType
                use_dissipation, dissipation_const, tau_type,
                krylov_itr, krylov_type,
                time,
-               const_delta)
+               const_delta,
+               recompute_jac)
 
   end   # end of ParamType function
 
@@ -253,6 +256,7 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
   res::Array{Tres, 3}           # result of computation (numDofs, numNodesPerElem, numElems)
   res_irk::Array{Tres, 4}       # result of computation (numDofs, numNodesPerElem, numElems)
   res1::Array{Float64, 3}       # result of computation (numDofs, numNodesPerElem, numElems)
+  res2::Array{Float64, 3}       # result of computation (numDofs, numNodesPerElem, numElems)
   res_vec::Array{Tres, 1}       # result of computation in vector form
   q_vec::Array{Tres,1}          # initial condition in vector form
   q_bndry::Array{Tsol, 3}       # store solution variables interpolated to
@@ -335,6 +339,7 @@ type EllipticData_{Tsol, Tres, Tdim, Tmsh} <: EllipticData{Tsol, Tres, Tdim}
     end
     if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "CN"
       eqn.q1      = zeros(Float64, numvars, sbp.numnodes, mesh.numEl)
+      eqn.res2    = zeros(Float64, numvars, sbp.numnodes, mesh.numEl)
     end
     eqn.res    = zeros(Tsol, numvars, sbp.numnodes, mesh.numEl)
     if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "SDIRK4"

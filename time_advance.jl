@@ -109,6 +109,10 @@ function evalRes{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
   end
 end
 
+"""
+  time accurate advancement. Now it's totally a mess. Better to 
+  separate BDF2 and CN, or figure out how to factor this funciton.
+"""
 function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh}, 
                                                pmesh::AbstractMesh{Tmsh},
                                                sbp::AbstractSBP{Tsbp}, 
@@ -162,7 +166,7 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
   newton_data, jac, rhs_vec = setupNewton(mesh, pmesh, sbp, eqn, opts, evalRes, alloc_rhs=false)
   ctx_residual = (evalRes, )
-  jac_func = physicsJac
+  jac_func = myphysicsJac
   rhs_func = physicsRhs
 
   step_tol = 1.0e-6
@@ -183,6 +187,8 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
       end
     end
 
+    eqn.params.t += dt 
+
     eqn.istage = 1
     for s = 1:eqn.nstages
       # newton(evalRes, mesh, sbp, eqn, opts, pmesh, 
@@ -193,6 +199,15 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
              # res_reltol=opts["res_reltol"], 
              # res_reltol0=opts["res_reltol0"])
 
+      # for CN, the spatial residual should be stored
+      if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "CN"
+        eqn.params.t -= dt 
+        evalElliptic(mesh, sbp, eqn, opts)
+        for i = 1 : length(eqn.res)
+          eqn.res1[i] = real(eqn.res[i])
+        end
+        eqn.params.t += dt 
+      end 
       newtonInner(newton_data, mesh, sbp, eqn, opts, 
                   rhs_func, jac_func, jac, rhs_vec, 
                   ctx_residual, eqn.params.t,
@@ -219,7 +234,7 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
           for n = 1:mesh.numNodesPerElement
             for dof = 1:mesh.numDofPerNode
               eqn.q1[dof, n, el] = real(eqn.q[dof, n, el])
-              eqn.res1[dof, n, el] = real(eqn.res[dof, n, el])
+              # eqn.res1[dof, n, el] = real(eqn.res[dof, n, el])
             end
           end
         end
@@ -238,7 +253,6 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     end
 
-    eqn.params.t += dt 
 
     # postprocessing
     if haskey(opts, "write_energy") && opts["write_energy"] == true
@@ -246,6 +260,8 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
       println(f, t, " ", real(eqn.energy[1]))
       flush(f)
       if real(eqn.energy[1]) < 1.e-12
+        break
+      elseif real(eqn.energy[1]) > 1.e12
         break
       end
     end
@@ -272,5 +288,61 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
   if haskey(opts, "exactSolution")
     close(ferr)
   end
+  return nothing
+end
+
+function myphysicsJac(newton_data::NewtonData, 
+                      mesh, 
+                      sbp, 
+                      eqn, 
+                      opts, 
+                      jac, 
+                      ctx_residual, 
+                      t=0.0; 
+                      is_preconditioned::Bool=false)
+  if opts["TimeAdvance"] == "SDIRK4"
+    func = evalElliptic
+  else
+    func = ctx_residual[1]
+  end
+
+  epsilon = opts["epsilon"]::Float64
+  pert = complex(0, epsilon)
+
+  if eqn.params.recompute_jac
+    res_copy = copy(eqn.res)  # copy unperturbed residual
+    # calcJacobianSparse(newton_data, mesh, sbp, eqn, opts, func, res_copy, pert, jac, t)
+    physicsJac(newton_data, mesh, sbp, eqn, opts, jac, ctx_residual, t)
+    # eqn.jac_bak = deepcopy(jac)
+    eqn.params.recompute_jac = false
+  end
+
+  if opts["TimeAdvance"] != "SDIRK4"
+    return nothing
+  end
+
+  if opts["TimeAdvance"] == "SDIRK4"
+    for i = 1 : length(jac.nzval)
+      jac.nzval[i] *= eqn.params.irk_c[eqn.istage, eqn.istage]
+    end
+
+    dt = opts["delta_t"]
+
+    for el= 1:mesh.numEl
+      jac = sview(mesh.jac, :, el)
+      for n = 1:mesh.numNodesPerElement 
+        for dof = 1:mesh.numDofPerNode
+          col = (el-1) * mesh.numNodesPerElement * mesh.numDofPerNode + (n-1)*mesh.numDofPerNode + dof
+          for i = jac.colptr[col] : jac.colptr[col+1] - 1
+            row = jac.rowval[i]
+            if row == col
+              jac.nzval[i] += sbp.w[n]/jac[n]/dt
+            end
+          end
+        end
+      end
+    end
+  end
+
   return nothing
 end

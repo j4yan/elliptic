@@ -19,7 +19,7 @@ function call{Tmsh, Tsol}(obj::ExactTrigUnsteady,
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
                           t=0.0)  # (numDofPerNode))
-  k = 2.0
+  k = 1.0
   c = -10
   q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
   return nothing
@@ -44,6 +44,18 @@ function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady2,
                           q::AbstractArray{Tsol, 1},
                           t=0.0)  # (numDofPerNode))
   k = 0.5
+  c = -1.0
+  q[:] = exp(xy[1] + xy[2]) * sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
+  return nothing
+end
+
+type ExactTrigSlightUnsteady3 <: ExactSolutionType
+end
+function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady3, 
+                          xy::AbstractArray{Tmsh}, 
+                          q::AbstractArray{Tsol, 1},
+                          t=0.0)  # (numDofPerNode))
+  k = 1.0
   c = -1.0
   q[:] = exp(xy[1] + xy[2]) * sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
   return nothing
@@ -92,6 +104,7 @@ global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
  "ExactTrigUnsteady" => ExactTrigUnsteady(),
  "ExactTrigSlightUnsteady" => ExactTrigSlightUnsteady(),
  "ExactTrigSlightUnsteady2" => ExactTrigSlightUnsteady2(),
+ "ExactTrigSlightUnsteady3" => ExactTrigSlightUnsteady3(),
  "ExactPoly2nd" => ExactPoly2nd(),
  "ExactExpTrig" => ExactExpTrig(),
  "ExactHicken2011" => ExactHicken2011(),

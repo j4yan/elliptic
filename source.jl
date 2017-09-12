@@ -206,6 +206,40 @@ function call(obj::SrcTrigPoly2ndDiffnSlightUnsteady2,
   return nothing
 end
 
+type SrcTrigPoly2ndDiffnSlightUnsteady3 <: SRCType
+end
+function call(obj::SrcTrigPoly2ndDiffnSlightUnsteady3, 
+              xy::AbstractVector, 
+              src::AbstractArray,
+              t=0.0)
+  src[1] = 0.0
+  k = 1.0
+  ss = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  cs = cos(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
+  sc = sin(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  cc = cos(2*k*pi*xy[1])*cos(2*k*pi*xy[2])
+  ex = exp(xy[1] + xy[2])
+  lambdaxx = xy[1]*xy[1] + 1
+  lambdaxy = xy[1]*xy[2]
+  lambdayy = xy[2]*xy[2] + 1
+  q_x = ex * (ss + 2*k*pi * cs)
+  q_y = ex * (ss + 2*k*pi * sc)
+  q_xx = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * cs)
+  q_xy = ex * (ss + 2*k*pi*cs + 2*k*pi*sc + 4*k*k*pi*pi*cc)
+  q_yy = ex * ((1 - 4*k*k*pi*pi) * ss + 4*k*pi * sc)
+  lambdaxx_x = 2*xy[1]
+  lambdaxy_x = xy[2]
+  lambdaxy_y = xy[1]
+  lambdayy_y = 2*xy[2]
+  src[1] = lambdaxx_x * q_x + lambdaxx * q_xx + 
+           lambdaxy_x * q_y + lambdaxy * q_xy + 
+           lambdaxy_y * q_x + lambdaxy * q_xy + 
+           lambdayy_y * q_y + lambdayy * q_yy
+
+  c = -1.0
+  src[1] = exp(c*t) * (c*ex*ss - src[1])
+  return nothing
+end
 
 
 #
@@ -241,6 +275,7 @@ global const SRCDict = Dict{ASCIIString, SRCType}(
  "SrcTrigPoly2ndDiffnUnsteady" => SrcTrigPoly2ndDiffnUnsteady(),
  "SrcTrigPoly2ndDiffnSlightUnsteady" => SrcTrigPoly2ndDiffnSlightUnsteady(),
  "SrcTrigPoly2ndDiffnSlightUnsteady2" => SrcTrigPoly2ndDiffnSlightUnsteady2(),
+ "SrcTrigPoly2ndDiffnSlightUnsteady3" => SrcTrigPoly2ndDiffnSlightUnsteady3(),
  "SrcTrigPoly2ndDiffn" => SrcTrigPoly2ndDiffn(),
  "SrcTrigPoly6thDiffn" => SrcTrigPoly6thDiffn(),
  "SrcHicken2011" => SrcHicken2011(),
