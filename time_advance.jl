@@ -191,14 +191,6 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
 
     eqn.istage = 1
     for s = 1:eqn.nstages
-      # newton(evalRes, mesh, sbp, eqn, opts, pmesh, 
-             # eqn.params.t,
-             # itermax=opts["itermax"],
-             # step_tol=opts["step_tol"], 
-             # res_abstol=opts["res_abstol"],
-             # res_reltol=opts["res_reltol"], 
-             # res_reltol0=opts["res_reltol0"])
-
       # for CN, the spatial residual should be stored
       if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "CN"
         eqn.params.t -= dt 
@@ -303,7 +295,7 @@ function myphysicsJac(newton_data::NewtonData,
                       ctx_residual, 
                       t=0.0; 
                       is_preconditioned::Bool=false)
-  if opts["TimeAdvance"] == "SDIRK4"
+  if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "SDIRK4"
     func = evalElliptic
   else
     func = ctx_residual[1]
@@ -316,15 +308,14 @@ function myphysicsJac(newton_data::NewtonData,
     res_copy = copy(eqn.res)  # copy unperturbed residual
     # calcJacobianSparse(newton_data, mesh, sbp, eqn, opts, func, res_copy, pert, jac, t)
     physicsJac(newton_data, mesh, sbp, eqn, opts, jac, ctx_residual, t)
-    # eqn.jac_bak = deepcopy(jac)
     eqn.params.recompute_jac = false
   end
 
-  if opts["TimeAdvance"] != "SDIRK4"
+  if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] != "SDIRK4"
     return nothing
   end
 
-  if opts["TimeAdvance"] == "SDIRK4"
+  if haskey(opts, "TimeAdvance") && opts["TimeAdvance"] == "SDIRK4"
     for i = 1 : length(jac.nzval)
       jac.nzval[i] *= eqn.params.irk_c[eqn.istage, eqn.istage]
     end
