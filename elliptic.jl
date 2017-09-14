@@ -2,6 +2,19 @@ import PDESolver.evalResidual
 export evalResidual, evalElliptic, init, testOperatorGradientInterpolation, dataPrep, interpolateFace
 
 using Debug
+
+"""
+  initialization, ie, get the necessary functors, compute
+  diffusion coefficients, and initialize the solution field.
+
+  **Input**
+   * mesh
+   * sbp
+   * opts
+
+  **Input/Output**
+   * eqn
+"""
 function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
                                 sbp::AbstractSBP,
                                 eqn::AbstractEllipticData{Tsol, Tres},
@@ -22,25 +35,8 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   calcDiffn(mesh, sbp, eqn, eqn.diffusion_func, eqn.lambda)
   dim = size(mesh.coords, 1)
 
-
-  if haskey(opts, "IC") && opts["IC"] == "random"
-    k = 1.0
-    for e = 1:mesh.numEl
-      for n = 1:mesh.numNodesPerElement
-        xy = sview(mesh.coords, :, n, e)
-        for v = 1:mesh.numDofPerNode
-          eqn.q[v, n, e] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
-          r = rand(1:100)
-          eqn.q[v,n,e] + r*1.0e-1
-        end
-      end
-    end
-    return nothing
-  end
-
-
-  if haskey(opts, "IC")
-    initFunc = ExactDict[opts["IC"]]
+  if haskey(opts, "IC_name")
+    initFunc = ExactDict[opts["IC_name"]]
   else
     initFunc = ExactDict["ExactTrig"]
   end
@@ -53,8 +49,31 @@ function init{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
       end
     end
   end
+
+  if opts["perturb_ic"]
+    println("\nPerturbing initial condition")
+    perturb_mag = opts["perturb_mag"]
+    for i=1:mesh.numDof
+      eqn.q[i] += perturb_mag*rand()
+    end
+  end
+
+  return nothing
 end
 
+"""
+  High level/wrapper function to compute residual. This function/API
+  is necessary to define a physics.
+
+  **Input**
+   * mesh
+   * sbp
+   * opts
+   * t
+
+  **Input/Outptu**
+   * eqn
+"""
 function evalResidual(mesh::AbstractMesh,
                       sbp::AbstractSBP,
                       eqn::EllipticData,
@@ -63,6 +82,20 @@ function evalResidual(mesh::AbstractMesh,
   evalElliptic(mesh, sbp, eqn, opts)
 end
 
+"""
+  This function evaluate the residual through calling some
+  middle level residual evaluation functions.
+  Currently parallel is not supported.
+
+  **Input**
+   * mesh
+   * sbp
+   * opts
+   * t
+
+  **Input/Outptu**
+   * eqn
+"""
 function evalElliptic(mesh::AbstractMesh,
                       sbp::AbstractSBP,
                       eqn::EllipticData,
@@ -98,15 +131,21 @@ function evalElliptic(mesh::AbstractMesh,
 end
 
 
+"""
+  Precompute some variables (fluxes) before the volume, face and bounadry integral.
+
+  **Input**
+   * mesh
+   * sbp
+   * opts
+
+  **Input/Output**
+   * eqn
+"""
 function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
-                                           sbp::AbstractSBP,
-                                           eqn::AbstractEllipticData{Tsol, Tres},
-                                           opts)
-  #
-  # TODO: Not sure if filtering is needed
-  #
-
-
+                                    sbp::AbstractSBP,
+                                    eqn::AbstractEllipticData{Tsol, Tres},
+                                    opts)
 
   fill!(eqn.res, 0.0)
   # fill!(eqn.res_edge, 0.0)
@@ -117,39 +156,12 @@ function dataPrep{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   calcGradient(mesh, sbp, eqn, eqn.q, eqn.q_grad)
 
   fill!(eqn.q_face, 0.0)
-  # fill!(eqn.q_grad_face, 0.0)
   fill!(eqn.q_bndry, 0.0)
-  # fill!(eqn.q_grad_bndry, 0.0)
 
-  # interpolate diffusion from elements to faces
-  # dim = size(mesh.coords, 1)
-  # lambda_elem = Array(Tsol, mesh.numDofPerNode, mesh.numNodesPerElement, mesh.numEl)
-  # lambda_face = Array(Tsol, mesh.numDofPerNode, 2, mesh.numNodesPerFace, mesh.numInterfaces)
-  # lambda_bndry = Array(Tsol, mesh.numDofPerNode, mesh.numNodesPerFace, mesh.numBoundaryFaces)
-
-  # for d2 = 1 : dim
-  # for d1 = 1 : dim
-  # lambda_elem = slice(eqn.lambda, d1, d2, :, :, :)
-  # lambda_face = slice(eqn.lambda_face, d1, d2, :, :, :, :)
-  # lambda_bndry = slice(eqn.lambda_bndry, d1, d2, :, :, :)
-  # interpolateFace(mesh, sbp, eqn, opts, lambda_elem, lambda_face)
-  # interpolateBoundary(mesh, sbp, eqn, opts, lambda_elem, lambda_bndry)
-
-
-  # # lambda_elem[:,:,:] = eqn.lambda[d1, d2, :,:,:]
-  # # interpolateFace(mesh, sbp, eqn, opts, lambda_elem, lambda_face)
-  # # interpolateBoundary(mesh, sbp, eqn, opts, lambda_elem, lambda_bndry)
-  # # eqn.lambda_face[d1, d2, :,:,:,:] = lambda_face[:,:,:,:]
-  # # eqn.lambda_bndry[d1, d2, :,:,:] = lambda_bndry[:,:,:]
-  # end
-  # end
 
   # interpolate q from volume to interior edge and boundary edge
   interpolateBoundary(mesh, sbp, eqn, opts, eqn.q, eqn.q_bndry)
   interpolateFace(mesh, sbp, eqn, opts, eqn.q, eqn.q_face)
-  # interpolate grad(q) from volume to interior edge and boundary edge
-  # interpolateBoundary(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_bndry)
-  # interpolateFace(mesh, sbp, eqn, opts, eqn.q_grad, eqn.q_grad_face)
 
   fill!(eqn.xflux_face, 0.0)
   fill!(eqn.yflux_face, 0.0)

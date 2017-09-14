@@ -213,7 +213,7 @@ end
 
 """
 
-  compute the SAT term and assemble into eqn.res
+  compute the BR2 term and assemble into eqn.res
   TODO: Currently it only works for SBP-BR2 and SBP-SIPG. We may need to
         extend it to CDG (compact discontinuous galerkin). 
 
@@ -325,13 +325,13 @@ function getBCFluxes{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
 
         # term-5, the real penalty term
         cmptBPMat(mesh, sbp, eqn, opts, f, pMat)
-        if penalty_method == "SAT0" 
+        if penalty_method == "SIPG" 
           for n = 1:mesh.numNodesPerFace
             for dof = 1 : mesh.numDofPerNode
               flux[dof, n] += pMat[dof, n, n]*dq[dof, n] * relax_coef
             end
           end
-        elseif penalty_method == "SAT" 
+        elseif penalty_method == "BR2" 
           for n = 1:mesh.numNodesPerFace
             for n1 = 1:mesh.numNodesPerFace
               for dof = 1:mesh.numDofPerNode
@@ -438,7 +438,7 @@ function cmptBPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   # On boundary, the area is weighted twice
   fweight = 0.5*area_sum/face_area
 
-  if penalty_method == "SAT0"
+  if penalty_method == "SIPG"
     for dof = 1 : mesh.numDofPerNode
       eigMax = -1.0e10
       # left element
@@ -456,7 +456,7 @@ function cmptBPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
         pMat[dof, n, n] = eigMax*cdelta*fweight*area[n]*area[n]
       end
     end
-  elseif penalty_method == "SAT"
+  elseif penalty_method == "BR2"
     for i = 1 : length(pMat)
       pMat[i] = 0.0
     end

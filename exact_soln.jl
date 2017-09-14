@@ -7,7 +7,7 @@ end
 function call{Tmsh, Tsol}(obj::ExactTrig, 
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
+                          t=0.0)  
   k = 2.0
   q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2])
   return nothing
@@ -18,56 +18,31 @@ end
 function call{Tmsh, Tsol}(obj::ExactTrigUnsteady, 
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
-  k = 1.0
-  c = -10
-  q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
-  return nothing
-end
-
-type ExactTrigSlightUnsteady <: ExactSolutionType
-end
-function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady, 
-                          xy::AbstractArray{Tmsh}, 
-                          q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
+                          t=0.0)  
   k = 1.0
   c = -1.0
   q[:] = sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
   return nothing
 end
 
-type ExactTrigSlightUnsteady2 <: ExactSolutionType
+type ExactExpTrigUnsteady <: ExactSolutionType
 end
-function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady2, 
+function call{Tmsh, Tsol}(obj::ExactExpTrigUnsteady, 
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
+                          t=0.0)  
   k = 0.5
   c = -1.0
   q[:] = exp(xy[1] + xy[2]) * sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
   return nothing
 end
 
-type ExactTrigSlightUnsteady3 <: ExactSolutionType
-end
-function call{Tmsh, Tsol}(obj::ExactTrigSlightUnsteady3, 
-                          xy::AbstractArray{Tmsh}, 
-                          q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
-  k = 1.0
-  c = -1.0
-  q[:] = exp(xy[1] + xy[2]) * sin(2*k*pi*xy[1])*sin(2*k*pi*xy[2]) * exp(c*t)
-  return nothing
-end
-
-
 type ExactExpTrig <: ExactSolutionType
 end
 function call{Tmsh, Tsol}(obj::ExactExpTrig, 
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
+                          t=0.0)  
   k = 2.0
   ex = exp(xy[1] + xy[2])
   q[:] = ex * sin(2*k*pi*xy[1]) * sin(2*k*pi*xy[2])
@@ -92,7 +67,7 @@ end
 function call{Tmsh, Tsol}(obj::ExactHicken2011, 
                           xy::AbstractArray{Tmsh}, 
                           q::AbstractArray{Tsol, 1},
-                          t=0.0)  # (numDofPerNode))
+                          t=0.0)  
   ex = exp(xy[2])
   tmp = pi * (exp(xy[1]) -1.0) / (e - 1.0)
   q[:] = ex * sin(tmp)
@@ -100,14 +75,11 @@ function call{Tmsh, Tsol}(obj::ExactHicken2011,
 end
 
 global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
- "ExactTrig" => ExactTrig(),
- "ExactTrigUnsteady" => ExactTrigUnsteady(),
- "ExactTrigSlightUnsteady" => ExactTrigSlightUnsteady(),
- "ExactTrigSlightUnsteady2" => ExactTrigSlightUnsteady2(),
- "ExactTrigSlightUnsteady3" => ExactTrigSlightUnsteady3(),
- "ExactPoly2nd" => ExactPoly2nd(),
- "ExactExpTrig" => ExactExpTrig(),
- "ExactHicken2011" => ExactHicken2011(),
+ "ExactTrig"            => ExactTrig(),
+ "ExactTrigUnsteady"    => ExactTrigUnsteady(),
+ "ExactExpTrigUnsteady" => ExactExpTrigUnsteady(),
+ "ExactExpTrig"         => ExactExpTrig(),
+ "ExactHicken2011"      => ExactHicken2011(),
 )
 
 
@@ -123,10 +95,10 @@ global const ExactDict = Dict{ASCIIString, ExactSolutionType}(
    * l2norm: l2-norm of the error
 
 """
-function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
-                                           sbp::AbstractSBP,
-                                           eqn::AbstractEllipticData{Tsol, Tres},
-                                           opts)
+function calcErrorNorm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
+                                         sbp::AbstractSBP,
+                                         eqn::AbstractEllipticData{Tsol, Tres},
+                                         opts)
   t = eqn.params.t
   l2norm::Float64 = 0.
   lInfnorm::Float64 = 0.
@@ -154,5 +126,13 @@ function calcErrorL2Norm{Tmsh, Tsol, Tres}(mesh::AbstractMesh{Tmsh},
   end
 
   return sqrt(l2norm), lInfnorm
+end
+
+function getExactSolnFunctor(mesh::AbstractMesh,
+                             sbp::AbstractSBP,
+                             eqn::EllipticData,
+                             opts)
+  eqn.exactFunc = ExactDict[opts["exact_soln_func"]]
+  return nothing
 end
 

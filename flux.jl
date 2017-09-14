@@ -211,13 +211,13 @@ function calcFaceFlux{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractDGMesh{Tmsh},
     end
     
     # term-4, penalty term 
-    if penalty_method == "SAT0"  
+    if penalty_method == "SIPG"  
       for n=1:mesh.numNodesPerFace
         for dof = 1:mesh.numDofPerNode
           flux_face[dof, n, f] += pMat[dof, n, n]*dq[dof, n] * relax_coef
         end
       end
-    elseif penalty_method == "SAT" 
+    elseif penalty_method == "BR2" 
       for n=1:mesh.numNodesPerFace
         for j = 1:mesh.numNodesPerFace
           for dof = 1:mesh.numDofPerNode
@@ -393,9 +393,9 @@ function cmptIPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
   lambda_eL = sview(eqn.lambda, :,:,:,:,eL)
   lambda_eR = sview(eqn.lambda, :,:,:,:,eR)
 
-  if penalty_method == "SAT0"  ### SATs, Cip = -1
+  if penalty_method == "SIPG"  ### BR2s, Cip = -1
     #
-    # Compute SAT matrix (penalty parameter)
+    # Compute BR2 matrix (penalty parameter)
     # First compute the eigenvalue of 
     #
     #	|Λxx Λxy| |J 0|
@@ -427,7 +427,7 @@ function cmptIPMat{Tmsh, Tsol, Tres, Tdim}(mesh::AbstractMesh{Tmsh},
       end
     end
 
-  elseif penalty_method == "SAT"
+  elseif penalty_method == "BR2"
     for i = 1 : length(pMat)
       pMat[i] = 0.0	
     end

@@ -128,7 +128,7 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
     println(f, 0, ", ", real(eqn.energy[1]))
   end
 
-  if haskey(opts, "exactSolution")
+  if haskey(opts, "exact_soln_func")
     ferr = open("unsteady_error.dat", "w")
   end
 
@@ -266,8 +266,8 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
       end
     end
 
-    if haskey(opts, "exactSolution")
-      l2norm, lInfNorm = calcErrorL2Norm(mesh, sbp, eqn, opts)
+    if haskey(opts, "exact_soln_func")
+      l2norm, lInfNorm = calcErrorNorm(mesh, sbp, eqn, opts)
       println(ferr, t, "    ", l2norm)
       flush(ferr)
     end
@@ -282,15 +282,18 @@ function iterate{Tmsh, Tsol, Tres, Tdim, Tsbp}(mesh::AbstractMesh{Tmsh},
   if haskey(opts, "write_energy") && opts["write_energy"] == true
     close(f)
   end
-  if haskey(opts, "exactFunctional")
+  if haskey(opts, "Functional")
     close(ffunc)
   end
-  if haskey(opts, "exactSolution")
+  if haskey(opts, "exact_soln_func")
     close(ferr)
   end
   return nothing
 end
 
+"""
+  This funciton is a adaptor/wrapper of physicsJac. We need it to void recompute the jacobian matrix for this linear problem.
+"""
 function myphysicsJac(newton_data::NewtonData, 
                       mesh, 
                       sbp, 
